@@ -46,6 +46,7 @@ export const navItems: NavItem[] = [
     ],
   },
   { id: "pricing", label: "Pricing", href: "/#pricing", items: null },
+  { id: "blog", label: "Blog", href: "/blog", items: null },
   {
     id: "resources",
     label: "Resources",

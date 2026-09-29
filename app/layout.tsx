@@ -1,6 +1,6 @@
 import { Outfit, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { siteMetadata } from "@/lib/seo/metadata";
-import { buildJsonLd } from "@/lib/seo/json-ld";
+import { buildSiteJsonLd } from "@/lib/seo/json-ld";
 import type { Viewport } from "next";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { AuthProvider } from "@/lib/auth/AuthContext";
@@ -29,11 +29,11 @@ export const viewport: Viewport = { themeColor: "#000000" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${outfit.variable} ${dmSans.variable} ${jetBrainsMono.variable}`}>
+    <html lang="en-IN" className={`${outfit.variable} ${dmSans.variable} ${jetBrainsMono.variable}`}>
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildJsonLd()) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildSiteJsonLd()) }}
         />
       </head>
       <body className="bg-bg text-text">

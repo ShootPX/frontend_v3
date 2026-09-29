@@ -1,7 +1,8 @@
 import { siteConfig } from "@/lib/config/site";
 import { faqs } from "@/content/faq";
 
-export function buildJsonLd() {
+/** Site-wide entities. Safe on every page (the SEO pages reference the "#org" id). */
+export function buildSiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -21,6 +22,15 @@ export function buildJsonLd() {
         name: siteConfig.name,
         publisher: { "@id": `${siteConfig.url}/#org` },
       },
+    ],
+  };
+}
+
+/** Landing-page-only entities: its FAQ and the product summary. Other pages carry their own. */
+export function buildHomeJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
       {
         "@type": "SoftwareApplication",
         name: siteConfig.name,

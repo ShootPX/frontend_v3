@@ -1,4 +1,4 @@
-/** Copy for the two legal pages (/privacy, /terms) — one typed place, nothing hardcoded in components. */
+/** Copy for the legal and contact pages (/privacy, /terms, /refund, /contact) — one typed place, nothing hardcoded in components. */
 
 export const LEGAL_LAST_UPDATED = "August 28, 2026";
 
@@ -27,7 +27,7 @@ export const termsSections: LegalSection[] = [
   },
   {
     heading: "6. Cancellation and refunds",
-    body: "Subscriptions can be cancelled at any time and will remain active through the end of the paid period. Contact us for refund requests on a case-by-case basis.",
+    body: "Subscriptions can be cancelled at any time and will remain active through the end of the paid period. All purchases are final. See our Refund and Cancellation Policy at /refund.",
   },
   {
     heading: "7. Contact",
@@ -65,3 +65,40 @@ export const privacySections: LegalSection[] = [
     body: "Questions about this policy can be sent to shootpxlabs@gmail.com.",
   },
 ];
+
+export const refundSections: LegalSection[] = [
+  {
+    heading: "1. Purchases",
+    body: "All purchases are final. We do not offer refunds on credit packs or subscriptions.",
+  },
+  {
+    heading: "2. Failed generations",
+    body: "Credits are returned to your balance automatically if a generation fails.",
+  },
+  {
+    heading: "3. Billing errors",
+    body: "If you were charged twice, or charged without receiving credits, email shootpxlabs@gmail.com with your account email and payment ID and we will correct it.",
+  },
+  {
+    heading: "4. Cancelling a subscription",
+    body: "You can cancel a subscription at any time from Settings > Billing. Cancelling stops future renewals.",
+  },
+  {
+    heading: "5. Free signup credits",
+    body: "Free signup credits have no cash value.",
+  },
+  {
+    heading: "6. Contact",
+    body: "shootpxlabs@gmail.com.",
+  },
+];
+
+export const contactContent = {
+  intro: "Email us at the address below.",
+  replyTime: "We aim to reply within 2 business days.",
+  include: [
+    "Your account email",
+    "Your payment ID, for billing issues",
+    "A screenshot, for generation issues",
+  ],
+};

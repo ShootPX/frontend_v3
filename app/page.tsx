@@ -3,6 +3,8 @@ import { siteConfig } from "@/lib/config/site";
 import { withComingSoon } from "@/content/coming-soon-tools";
 import { getTools } from "@/lib/api/tools";
 import { getBilling } from "@/lib/api/billing";
+import { buildHomeJsonLd } from "@/lib/seo/json-ld";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { HomeAuthRedirect } from "@/components/HomeAuthRedirect";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -24,6 +26,7 @@ export default async function Home() {
 
   return (
     <>
+      <JsonLd data={buildHomeJsonLd()} />
       <HomeAuthRedirect />
       <Header />
       <main>
