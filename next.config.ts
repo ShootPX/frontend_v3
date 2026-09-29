@@ -34,6 +34,11 @@ const nextConfig: NextConfig = {
     // every image — is Next's documented way to allow any remote source;
     // narrow this to the real hostname once it's confirmed.
     remotePatterns: [{ protocol: "https", hostname: "**" }],
+    // Dev only: on IPv6/DNS64 networks the storage host resolves to NAT64
+    // addresses (64:ff9b::/96), which Next 16 blocks as "private" and the
+    // images never load. Production servers resolve normally, so the SSRF
+    // guard stays on there.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV === "development",
   },
 };
 
