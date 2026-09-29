@@ -48,15 +48,15 @@ export function ImageSlot({
       className={`flex flex-wrap gap-2 ${dragging ? "outline outline-1 outline-dashed outline-accent" : ""}`}
     >
       {files.map((f, i) => (
-        <div key={`${f.name}-${i}`} className="group relative h-[52px] w-[52px] border border-border bg-surface">
+        <div key={`${f.name}-${i}`} className="group relative h-[76px] w-[76px] border border-border bg-surface">
           {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview */}
           {urls[i] && <img src={urls[i]} alt="" className="h-full w-full object-cover" />}
           <button
             onClick={() => onRemove(i)}
             aria-label="Remove image"
-            className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-black text-white group-hover:flex"
+            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/75 text-white hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            <X size={10} />
+            <X size={12} />
           </button>
         </div>
       ))}
@@ -64,9 +64,9 @@ export function ImageSlot({
         onClick={() => inputRef.current?.click()}
         disabled={disabled}
         aria-label="Add images"
-        className="flex h-[52px] w-[52px] items-center justify-center border-[1.5px] border-dashed border-border-strong text-dim hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-[76px] w-[76px] items-center justify-center border-[1.5px] border-dashed border-border-strong text-dim hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <Plus size={18} />
+        <Plus size={22} />
       </button>
       <input
         ref={inputRef}

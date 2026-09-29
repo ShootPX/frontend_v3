@@ -3,16 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { Avatar } from "@/components/ui/Avatar";
 import { useToast } from "@/lib/studio/ToastContext";
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 export function AccountTab() {
   const { profile, signOut } = useAuth();
@@ -36,9 +28,12 @@ export function AccountTab() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center gap-4">
-        <div className="flex h-[52px] w-[52px] flex-none items-center justify-center border border-border-strong bg-surface text-base font-medium">
-          {initials(label)}
-        </div>
+        <Avatar
+          src={profile?.avatarUrl}
+          name={label}
+          sizes="52px"
+          className="h-[52px] w-[52px] border border-border-strong bg-surface text-base font-medium"
+        />
         <div>
           <div className="text-[15px] font-semibold">{label}</div>
           <div className="text-[12.5px] text-dim">{profile?.email}</div>

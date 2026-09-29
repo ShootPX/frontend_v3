@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CreditIcon } from "@/components/ui/CreditIcon";
+import { ScrollFade } from "@/components/ui/ScrollFade";
 import { generate } from "@/lib/api/generate";
 import { useTeam } from "@/lib/studio/TeamContext";
 import { useTeamBilling } from "@/lib/studio/TeamBillingContext";
@@ -60,6 +61,8 @@ export function ModelShootFlow({
   const [error, setError] = useState<ShootError | null>(null);
   const [uploadNote, setUploadNote] = useState("");
   const [enhancing, setEnhancing] = useState(false);
+  // A generated model preview exists but hasn't been accepted yet.
+  const [modelPending, setModelPending] = useState(false);
 
   const total = 1 + productImageCount(products) + products.refs.length;
   const garments = productImageCount(products);
@@ -133,10 +136,21 @@ export function ModelShootFlow({
   }
 
   const primaryDisabled = step === 3 ? submitting || running || enhancing : !canAdvance;
+  // Why Continue is off, shown under it.
+  const blockedReason =
+    step === 1 && !model
+      ? modelPending
+        ? "Accept the generated model to continue"
+        : "Choose a model to continue"
+      : step === 2 && garments === 0
+        ? "Add at least one garment"
+        : step === 2 && total > MAX_TOTAL_IMAGES
+          ? `Remove ${total - MAX_TOTAL_IMAGES} image${total - MAX_TOTAL_IMAGES === 1 ? "" : "s"} to continue`
+          : null;
 
   return (
     <div className="flex h-full w-[380px] flex-none flex-col border-r border-border">
-      <div className="flex min-h-0 flex-1 flex-col gap-[22px] overflow-auto px-6 py-6">
+      <ScrollFade className="flex-1" contentClassName="flex flex-col gap-[22px] px-6 py-6">
         <div className="flex items-stretch border border-border">
           {STEPS.map((label, i) => {
             const n = i + 1;
@@ -163,7 +177,7 @@ export function ModelShootFlow({
           })}
         </div>
 
-        {step === 1 && <ModelStep model={model} onChange={setModel} />}
+        {step === 1 && <ModelStep model={model} onChange={setModel} onPendingChange={setModelPending} />}
         {step === 2 && (
           <>
             <ProductsStep state={products} onChange={setProducts} totalImages={total} onAddFiles={addFiles} />
@@ -176,7 +190,7 @@ export function ModelShootFlow({
             onChange={setOutput}
             onEnhancingChange={setEnhancing}
           />}
-      </div>
+      </ScrollFade>
 
       <div className="flex flex-none flex-col gap-2 border-t border-border px-6 py-4">
         {error && (
@@ -216,6 +230,9 @@ export function ModelShootFlow({
             {step === 3 ? (submitting ? "Starting…" : running ? "Generating…" : enhancing ? "Enhancing prompt…" : "Generate on-model shots") : "Continue"}
           </button>
         </div>
+        {primaryDisabled && blockedReason && (
+          <p className="text-center text-[12px] text-dim">{blockedReason}</p>
+        )}
         {step === 3 && cost != null && (
           <div className="flex flex-col items-center gap-1 text-[12.5px] text-dim">
             <span className="flex items-center gap-1.5">

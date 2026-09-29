@@ -2,6 +2,7 @@
 
 import { Minus, Plus } from "lucide-react";
 import { EnhancePromptButton, PROMPT_MAX_LENGTH } from "../EnhancePromptButton";
+import { AutoGrowTextarea } from "@/components/ui/AutoGrowTextarea";
 import { CreditIcon } from "@/components/ui/CreditIcon";
 import { modelShootCost } from "@/lib/tools/model-shoot";
 import { parseRatio, ratioShape } from "@/lib/tools/ratio";
@@ -33,14 +34,6 @@ export function OutputStep({
   const count = fields.find((f) => f.name === "output_count");
   const min = count?.min ?? 1;
   const max = count?.max ?? 8;
-  // Price of each resolution relative to the cheapest (1K = 1x), from the real per-output costs.
-  const resOptions = (resolution?.options ?? []).map(optionValue);
-  const baseCost = Math.min(...resOptions.map((v) => modelShootCost(v, 1) ?? Infinity));
-  const multipliers: Record<string, number> = {};
-  for (const v of resOptions) {
-    const c = modelShootCost(v, 1);
-    if (c != null && Number.isFinite(baseCost)) multipliers[v] = c / baseCost;
-  }
   const set = (patch: Partial<OutputValues>) => onChange({ ...values, ...patch });
 
   return (
@@ -53,13 +46,13 @@ export function OutputStep({
             <div className="grid grid-cols-5 gap-1.5">
               {(ratio.options ?? []).map((o) => {
                 const v = optionValue(o);
-                const { width, height } = ratioShape(parseRatio(v), 30);
+                const { width, height } = ratioShape(parseRatio(v), 34);
                 const on = values.aspectRatio === v;
                 return (
                   <button key={v} onClick={() => set({ aspectRatio: v })} className="flex flex-col items-center gap-1.5">
-                    <div className="flex h-9 w-full items-center justify-center">
+                    <div className="flex h-10 w-full items-center justify-center">
                       <div
-                        className={`border-2 bg-surface-2 ${on ? "border-accent" : "border-border-strong"}`}
+                        className={`rounded-[3px] border-2 ${on ? "border-accent bg-accent" : "border-border-strong bg-surface-2"}`}
                         style={{ width, height }}
                       />
                     </div>
@@ -98,6 +91,7 @@ export function OutputStep({
             <div className="flex gap-0.5 border border-border bg-border">
               {(resolution.options ?? []).map((o) => {
                 const v = optionValue(o);
+                const perOutput = modelShootCost(v, 1);
                 return (
                   <button
                     key={v}
@@ -107,10 +101,10 @@ export function OutputStep({
                     }`}
                   >
                     {RESOLUTION_LABEL[v] ?? optionLabel(o)}
-                    {multipliers[v] != null && (
+                    {perOutput != null && (
                       <span className="credit-amount text-[11px] opacity-80">
                         <CreditIcon size={10} />
-                        {Number.isInteger(multipliers[v]) ? multipliers[v] : multipliers[v].toFixed(1)}x
+                        {perOutput}
                       </span>
                     )}
                   </button>
@@ -119,13 +113,15 @@ export function OutputStep({
             </div>
           </div>
         )}
+        {resolution && <p className="-mt-1.5 text-right text-[11px] text-dim">Credits per output at each resolution</p>}
 
-        <textarea
+        <AutoGrowTextarea
           value={values.prompt}
           onChange={(e) => set({ prompt: e.target.value })}
           placeholder="Anything specific? e.g. soft window light, minimal studio"
           maxLength={PROMPT_MAX_LENGTH}
-          className="h-[60px] w-full resize-none border border-border bg-surface p-3 text-[12.5px] text-text outline-none focus:border-accent"
+          maxHeight={200}
+          className="w-full border border-border bg-surface p-3 text-[12.5px] text-text outline-none focus:border-accent"
         />
         <EnhancePromptButton
           value={values.prompt}

@@ -1,5 +1,6 @@
 import { siteConfig } from "@/lib/config/site";
 import { faqs } from "@/content/faq";
+import type { BillingResponse } from "@/lib/types/billing";
 
 /** Site-wide entities. Safe on every page (the SEO pages reference the "#org" id). */
 export function buildSiteJsonLd() {
@@ -11,6 +12,7 @@ export function buildSiteJsonLd() {
         "@id": `${siteConfig.url}/#org`,
         name: siteConfig.name,
         url: `${siteConfig.url}/`,
+        logo: `${siteConfig.url}/icon.png`,
         description:
           "AI product photography platform for e-commerce sellers.",
         sameAs: Object.values(siteConfig.social),
@@ -27,7 +29,16 @@ export function buildSiteJsonLd() {
 }
 
 /** Landing-page-only entities: its FAQ and the product summary. Other pages carry their own. */
-export function buildHomeJsonLd() {
+export function buildHomeJsonLd(billing?: BillingResponse) {
+  // Real prices from the plans API (paise -> rupees); omitted if the API returned none.
+  const plans = [...(billing?.subscriptions ?? []), ...(billing?.credits ?? [])];
+  const offers = plans.map((p) => ({
+    "@type": "Offer",
+    name: p.name,
+    price: (p.price / 100).toFixed(2),
+    priceCurrency: "INR",
+    url: `${siteConfig.url}/#pricing`,
+  }));
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -36,6 +47,7 @@ export function buildHomeJsonLd() {
         name: siteConfig.name,
         applicationCategory: "DesignApplication",
         operatingSystem: "Web browser",
+        ...(offers.length > 0 ? { offers } : {}),
         description:
           "Turn one product photo into studio-style images: listing photoshoots, creative scenes, recolor and model shoots for e-commerce sellers.",
       },
