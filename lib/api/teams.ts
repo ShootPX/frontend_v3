@@ -1,5 +1,6 @@
 import { authedJson } from "@/lib/api/authed-fetch";
 import type {
+  BillingHistoryResponse,
   InviteRole,
   MyTeam,
   MyTeamsResponse,
@@ -53,6 +54,14 @@ export function getTeamBilling(teamId: string) {
   return authedJson<TeamBilling>(`/teams/${teamId}/billing`);
 }
 
+export function getTeamBillingHistory(teamId: string, params?: { limit?: number; cursor?: string | null }) {
+  const qs = new URLSearchParams();
+  if (params?.limit != null) qs.set("limit", String(params.limit));
+  if (params?.cursor) qs.set("cursor", params.cursor);
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return authedJson<BillingHistoryResponse>(`/teams/${teamId}/billing/history${suffix}`);
+}
+
 export function getTeamInvites(teamId: string) {
   return authedJson<TeamInvitesResponse>(`/teams/${teamId}/invites`);
 }
@@ -96,6 +105,7 @@ export function getTeamGenerations(
     // "library" also includes model_shoot_generate_model results; the default ("recent") is Home's.
     view?: "recent" | "library";
   },
+  signal?: AbortSignal,
 ) {
   const qs = new URLSearchParams();
   if (params?.limit != null) qs.set("limit", String(params.limit));
@@ -108,5 +118,5 @@ export function getTeamGenerations(
   if (params?.toDate) qs.set("to_date", params.toDate);
   if (params?.view) qs.set("view", params.view);
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  return authedJson<GenerationsResponse>(`/teams/${teamId}/generations${suffix}`);
+  return authedJson<GenerationsResponse>(`/teams/${teamId}/generations${suffix}`, { signal });
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { parseRatio, ratioShape } from "@/lib/tools/ratio";
 
 const POPOVER_W = 440;
@@ -53,7 +53,10 @@ export function SizeField({
         className="flex w-full items-center justify-between border border-border bg-surface p-3.5 hover:border-accent"
       >
         <span className="text-[13px] font-medium">{label}</span>
-        <span className="text-[13px] text-muted">{current?.label ?? "None"}</span>
+        <span className="flex items-center gap-2 text-[13px] text-muted">
+          {current?.label ?? "None"}
+          <ChevronDown size={13} className="text-dim" />
+        </span>
       </button>
 
       {pos && (

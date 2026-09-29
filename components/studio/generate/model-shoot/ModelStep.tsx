@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Check, Loader2, Upload } from "lucide-react";
 import { Credits } from "@/components/ui/CreditIcon";
+import { Dropdown } from "@/components/ui/Dropdown";
 import {
   generate,
   getBatch,
@@ -25,9 +26,6 @@ const TABS: { id: Source; label: string }[] = [
   { id: "generate", label: "Generate" },
   { id: "upload", label: "Upload" },
 ];
-
-const selectCls =
-  "mt-1.5 w-full border border-border bg-surface px-3 py-2.5 text-[13px] text-text outline-none focus:border-accent";
 
 // The schema lists skin tones light → deep; paint them from the design's
 // four-stop range so any number of options still reads as a scale.
@@ -58,11 +56,17 @@ function pollDelay(elapsedMs: number) {
 export function ModelStep({
   model,
   onChange,
+  onPendingChange,
 }: {
   model: ModelChoice | null;
   onChange: (m: ModelChoice) => void;
+  /** True while a generated preview exists that hasn't been accepted yet. */
+  onPendingChange?: (pending: boolean) => void;
 }) {
-  const [source, setSource] = useState<Source>("presets");
+  // Coming back from a later step, reopen the tab the current model came from.
+  const [source, setSource] = useState<Source>(
+    model?.kind === "job" ? "generate" : model?.kind === "upload" ? "upload" : "presets",
+  );
 
   return (
     <>
@@ -82,7 +86,7 @@ export function ModelStep({
       </div>
 
       {source === "presets" && <Presets model={model} onChange={onChange} />}
-      {source === "generate" && <GenerateModel onChange={onChange} />}
+      {source === "generate" && <GenerateModel model={model} onChange={onChange} onPendingChange={onPendingChange} />}
       {source === "upload" && <UploadModel onChange={onChange} />}
 
       {model && <SelectedModel model={model} />}
@@ -117,6 +121,11 @@ function Presets({ model, onChange }: { model: ModelChoice | null; onChange: (m:
             className={`relative aspect-[3/4] overflow-hidden border-2 ${on ? "border-accent" : "border-transparent"}`}
           >
             <Image src={p.thumbnailUrl} alt={p.name} fill sizes="120px" className="object-cover" />
+            {on && (
+              <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-ink">
+                <Check size={12} strokeWidth={3} />
+              </span>
+            )}
             <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-1.5 pb-1 pt-4 text-left text-[10.5px] text-white">
               {p.name}
             </span>
@@ -179,7 +188,15 @@ function UploadModel({ onChange }: { onChange: (m: ModelChoice) => void }) {
 
 // "Create a model": model_shoot_generate_model takes attributes and no images.
 // Its form is built from that tool's own schema so option lists never drift.
-function GenerateModel({ onChange }: { onChange: (m: ModelChoice) => void }) {
+function GenerateModel({
+  model,
+  onChange,
+  onPendingChange,
+}: {
+  model: ModelChoice | null;
+  onChange: (m: ModelChoice) => void;
+  onPendingChange?: (pending: boolean) => void;
+}) {
   const { activeTeamId } = useTeam();
   const { refetch: refetchBilling, openBuyModal } = useTeamBilling();
   const { say } = useToast();
@@ -191,7 +208,7 @@ function GenerateModel({ onChange }: { onChange: (m: ModelChoice) => void }) {
       const preferred = PREFERRED[f.name] ? pickOption(f, PREFERRED[f.name]) : undefined;
       if (preferred) initial[f.name] = preferred;
       else if (f.default != null) initial[f.name] = String(f.default);
-      else if (f.name === "skin_tone" && f.options?.length) initial[f.name] = optionValue(f.options[0]); // lightest
+      else if (f.type === "select" && f.options?.length) initial[f.name] = optionValue(f.options[0]); // never start empty
     }
     return initial;
   };
@@ -200,8 +217,18 @@ function GenerateModel({ onChange }: { onChange: (m: ModelChoice) => void }) {
   const [values, setValues] = useState<Record<string, string>>(() => (cachedFields ? defaultsOf(cachedFields) : {}));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ message: string; credits: boolean } | null>(null);
-  const [candidate, setCandidate] = useState<{ jobId: string; url: string } | null>(null);
+  // Reopening this tab after Back shows the model that was already accepted.
+  const [candidate, setCandidate] = useState<{ jobId: string; url: string } | null>(() =>
+    model?.kind === "job" ? { jobId: model.jobId, url: model.url } : null,
+  );
   const cancelled = useRef(false);
+  const accepted = !!candidate && model?.kind === "job" && model.jobId === candidate.jobId;
+  const pending = !!candidate && !accepted;
+
+  useEffect(() => {
+    onPendingChange?.(pending);
+  }, [pending, onPendingChange]);
+  useEffect(() => () => onPendingChange?.(false), [onPendingChange]);
 
   useEffect(() => {
     cancelled.current = false;
@@ -291,21 +318,23 @@ function GenerateModel({ onChange }: { onChange: (m: ModelChoice) => void }) {
     <div className="flex flex-col gap-3.5">
       <div className="grid grid-cols-2 gap-x-2.5 gap-y-3.5">
         {dropdowns.map((f) => (
-          <label key={f.name} className="text-[11.5px] text-dim">
-            {f.label}
-            <select
+          <div key={f.name} className="flex flex-col gap-1.5 text-[11.5px] text-dim">
+            <span>
+              {f.label}
+              {f.required && <span className="text-accent"> *</span>}
+            </span>
+            <Dropdown
+              fullWidth
+              ariaLabel={f.label}
+              label={(() => {
+                const cur = (f.options ?? []).find((o) => optionValue(o) === values[f.name]);
+                return cur ? optionLabel(cur) : "Select…";
+              })()}
               value={values[f.name] ?? ""}
-              onChange={(e) => set(f.name, e.target.value)}
-              className={selectCls}
-            >
-              {!f.default && <option value="">Select…</option>}
-              {(f.options ?? []).map((o) => (
-                <option key={optionValue(o)} value={optionValue(o)}>
-                  {optionLabel(o)}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => set(f.name, v)}
+              options={(f.options ?? []).map((o) => ({ value: optionValue(o), label: optionLabel(o) }))}
+            />
+          </div>
         ))}
       </div>
 
@@ -374,18 +403,32 @@ function GenerateModel({ onChange }: { onChange: (m: ModelChoice) => void }) {
 
       {candidate && (
         <div className="flex flex-col gap-2">
-          <div className="relative aspect-[3/4] w-full border border-border bg-surface">
+          <div
+            className={`relative aspect-[3/4] w-full border-2 bg-surface ${accepted ? "border-accent" : "border-border"}`}
+          >
             <Image src={candidate.url} alt="Generated model" fill sizes="340px" className="object-cover" />
+            {accepted && (
+              <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-ink">
+                <Check size={14} strokeWidth={3} />
+              </span>
+            )}
           </div>
+          <p className={`text-[12px] ${accepted ? "text-accent" : "text-muted"}`}>
+            {accepted
+              ? "Model selected — you can continue."
+              : "This is a preview. Click “Use this model” to accept it before you continue."}
+          </p>
           <div className="flex gap-2">
             <button
               onClick={() => {
                 onChange({ kind: "job", jobId: candidate.jobId, url: candidate.url });
                 say("Model approved");
               }}
-              className="flex-1 bg-accent py-2.5 text-[13px] font-semibold text-accent-ink hover:bg-accent-hover"
+              disabled={accepted}
+              className="flex flex-1 items-center justify-center gap-1.5 bg-accent py-2.5 text-[13px] font-semibold text-accent-ink hover:bg-accent-hover disabled:cursor-default disabled:opacity-60 disabled:hover:bg-accent"
             >
-              Use this model
+              {accepted && <Check size={14} strokeWidth={3} />}
+              {accepted ? "Model selected" : "Use this model"}
             </button>
             <button
               onClick={run}
@@ -416,15 +459,18 @@ function SelectedModel({ model }: { model: ModelChoice }) {
     model.kind === "preset" ? model.name : model.kind === "job" ? "Generated model" : "Uploaded photo";
 
   return (
-    <div className="flex items-center gap-2.5 border border-accent bg-surface px-3 py-2.5">
-      <div className="h-[42px] w-[34px] flex-none overflow-hidden bg-surface-2">
+    <div className="flex items-center gap-3 border border-accent bg-surface px-3 py-2.5">
+      <div className="relative h-[56px] w-[44px] flex-none overflow-hidden border border-accent bg-surface-2">
         {/* eslint-disable-next-line @next/next/no-img-element -- may be a local blob preview */}
         {src && <img src={src} alt="" className="h-full w-full object-cover" />}
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="text-[12.5px] font-semibold">Model selected</div>
         <div className="truncate text-[11.5px] text-dim">{summary}</div>
       </div>
+      <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-accent text-accent-ink">
+        <Check size={12} strokeWidth={3} />
+      </span>
     </div>
   );
 }

@@ -5,6 +5,9 @@ import type { SeoGroup, SeoPage } from "@/content/seo/types";
 
 export const AUTHOR_NAME = "ShootPX Team";
 
+/** lastmod for the homepage and legal/contact pages. Bump it when their content changes. */
+export const STATIC_PAGES_UPDATED = "2026-09-21";
+
 export function seoPath(page: Pick<SeoPage, "group" | "slug">): string {
   return page.group === "pillar" ? `/${page.slug}` : `/${page.group}/${page.slug}`;
 }

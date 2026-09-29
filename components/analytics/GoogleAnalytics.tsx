@@ -1,10 +1,11 @@
 import Script from "next/script";
 
-// Renders nothing until NEXT_PUBLIC_GA_ID is set, so dev and preview builds
-// never send data. If you serve EU/UK visitors, gate this on cookie consent.
+// Renders nothing unless this is a production build AND NEXT_PUBLIC_GA_ID is
+// set, so local dev never sends data. There is no cookie-consent banner yet: if
+// you serve EU/UK visitors, gate this on consent.
 export function GoogleAnalytics() {
   const id = process.env.NEXT_PUBLIC_GA_ID;
-  if (!id) return null;
+  if (process.env.NODE_ENV !== "production" || !id) return null;
   return (
     <>
       <Script src={`https://www.googletagmanager.com/gtag/js?id=${id}`} strategy="afterInteractive" />

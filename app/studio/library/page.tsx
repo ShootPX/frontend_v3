@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { ChevronDown, Check, LayoutGrid, List } from "lucide-react";
+import { Check, LayoutGrid, List } from "lucide-react";
 import { useTeam } from "@/lib/studio/TeamContext";
 import { useToast } from "@/lib/studio/ToastContext";
 import { DetailPanel } from "@/components/studio/library/DetailPanel";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { getTeamGenerations, getTeamMembers } from "@/lib/api/teams";
 import { getTools } from "@/lib/api/tools";
 import { readCache, writeCache } from "@/lib/studio/session-cache";
@@ -38,8 +39,40 @@ function shortDay(ymd: string) {
 const dayStart = (ymd: string) => new Date(`${ymd}T00:00:00`).toISOString();
 const dayEnd = (ymd: string) => new Date(`${ymd}T23:59:59.999`).toISOString();
 
-const selectCls =
-  "appearance-none border border-border bg-surface py-2.5 pl-3.5 pr-9 text-[12.5px] text-text outline-none hover:border-accent focus:border-accent";
+// First row of the grid is above the fold: those images load eagerly.
+const PRIORITY_TILES = 5;
+const GRID_SIZES = "(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw";
+
+/** Image that fades in over a skeleton so the tile never pops or collapses. */
+function SkeletonImage({
+  src,
+  alt,
+  sizes,
+  priority,
+}: {
+  src: string;
+  alt: string;
+  sizes: string;
+  priority?: boolean;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <>
+      {!loaded && <div className="absolute inset-0 animate-pulse bg-surface-2" />}
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        priority={priority}
+        onLoad={() => setLoaded(true)}
+        className={`object-cover transition-[opacity,filter] duration-300 group-hover:brightness-110 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </>
+  );
+}
 
 // Fetch as a blob so the browser saves the file instead of navigating to it.
 async function downloadImage(g: Generation): Promise<boolean> {
@@ -73,7 +106,6 @@ export default function StudioLibrary() {
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
   const [customApplied, setCustomApplied] = useState<{ start: string; end: string } | null>(null);
-  const [dateOpen, setDateOpen] = useState(false);
 
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selectMode, setSelectMode] = useState(false);
@@ -87,6 +119,10 @@ export default function StudioLibrary() {
   );
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // The in-flight list request. A new one (filter change, load more) cancels
+  // it, so a slow old response can never overwrite newer results.
+  const abortRef = useRef<AbortController | null>(null);
   const [itemsLoading, setItemsLoading] = useState(
     () => !(activeTeamId && readCache<Generation[]>(`library:${activeTeamId}`)),
   );
@@ -115,23 +151,32 @@ export default function StudioLibrary() {
       return;
     }
     if (dateChoice === "custom" && !range) return; // waiting for Apply
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     if (replace) {
+      // Old results stay on screen until the new ones arrive.
       const cached = unfiltered && cacheKey ? readCache<Generation[]>(cacheKey) : null;
       if (cached) setItems(dedupeByJobId(cached));
       else setItemsLoading(true);
+      setLoadingMore(false);
     } else {
-      setItemsLoading(true);
+      setLoadingMore(true);
     }
-    getTeamGenerations(activeTeamId, {
-      view: "library",
-      limit: PAGE_SIZE,
-      offset: nextOffset,
-      featureType: toolFilter || undefined,
-      userId: memberFilter || undefined,
-      period: dateChoice === "custom" ? undefined : dateChoice,
-      fromDate: range ? dayStart(range.start) : undefined,
-      toDate: range ? dayEnd(range.end) : undefined,
-    })
+    getTeamGenerations(
+      activeTeamId,
+      {
+        view: "library",
+        limit: PAGE_SIZE,
+        offset: nextOffset,
+        featureType: toolFilter || undefined,
+        userId: memberFilter || undefined,
+        period: dateChoice === "custom" ? undefined : dateChoice,
+        fromDate: range ? dayStart(range.start) : undefined,
+        toDate: range ? dayEnd(range.end) : undefined,
+      },
+      controller.signal,
+    )
       .then((r) => {
         setItems((prev) => dedupeByJobId(replace ? r.generations : [...prev, ...r.generations]));
         setHasMore(r.generations.length === PAGE_SIZE);
@@ -140,9 +185,14 @@ export default function StudioLibrary() {
         if (replace) setSelected(new Set());
       })
       .catch(() => {
-        // Keep whatever we already have rather than blanking the grid out.
+        // Aborted by a newer request, or failed: keep what we already have
+        // rather than blanking the grid out.
       })
-      .finally(() => setItemsLoading(false));
+      .finally(() => {
+        if (abortRef.current !== controller) return; // superseded — the newer request owns the flags
+        setItemsLoading(false);
+        setLoadingMore(false);
+      });
   }
 
   useEffect(() => {
@@ -151,7 +201,21 @@ export default function StudioLibrary() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTeamId, toolFilter, memberFilter, dateChoice, customApplied]);
 
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   const loading = teamsLoading || itemsLoading;
+  const memberById = new Map(members.map((m) => [m.userId, m.name || m.email]));
+
+  const filtersActive = !!toolFilter || !!memberFilter || dateChoice !== "all_time";
+
+  function clearFilters() {
+    setToolFilter("");
+    setMemberFilter("");
+    setDateChoice("all_time");
+    setCustomApplied(null);
+    setCustomStart("");
+    setCustomEnd("");
+  }
   const toolName = useMemo(() => new Map(tools.map((t) => [t.featureType, t.displayName])), [tools]);
   const labelFor = (g: Generation) => toolName.get(g.featureType) ?? titleCase(g.featureType);
 
@@ -192,7 +256,6 @@ export default function StudioLibrary() {
 
   const viewable = items.filter((g) => g.status === "completed" && g.outputUrl);
   const detail = viewable.find((g) => g.jobId === detailId) ?? null;
-  const memberById = new Map(members.map((m) => [m.userId, m.name || m.email]));
   function stepDetail(dir: -1 | 1) {
     const i = viewable.findIndex((g) => g.jobId === detailId);
     if (i === -1 || viewable.length < 2) return;
@@ -213,9 +276,9 @@ export default function StudioLibrary() {
     );
   };
 
-  const thumb = (g: Generation, sizes: string) =>
+  const thumb = (g: Generation, sizes: string, priority = false) =>
     g.status === "completed" && g.outputUrl ? (
-      <Image src={g.outputUrl} alt={g.title || labelFor(g)} fill sizes={sizes} className="object-cover" />
+      <SkeletonImage src={g.outputUrl} alt={g.title || labelFor(g)} sizes={sizes} priority={priority} />
     ) : (
       <div className="flex h-full items-center justify-center p-2 text-center text-[11px] text-dim">
         {g.status === "failed" ? "Failed" : "Processing"}
@@ -225,90 +288,76 @@ export default function StudioLibrary() {
   return (
     <div className="flex flex-col gap-6 px-10 py-7">
       <div className="flex flex-wrap items-center gap-2.5">
-        <div className="relative">
-          <select value={toolFilter} onChange={(e) => setToolFilter(e.target.value)} className={selectCls}>
-            <option value="">All tools</option>
-            {tools.map((t) => (
-              <option key={t.featureType} value={t.featureType}>
-                {t.displayName}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-dim" />
-        </div>
+        <Dropdown
+          ariaLabel="Filter by tool"
+          label={toolFilter ? (toolName.get(toolFilter) ?? titleCase(toolFilter)) : "All tools"}
+          value={toolFilter}
+          onChange={setToolFilter}
+          options={[
+            { value: "", label: "All tools" },
+            ...tools.map((t) => ({ value: t.featureType, label: t.displayName })),
+          ]}
+        />
 
-        <div className="relative">
-          <select value={memberFilter} onChange={(e) => setMemberFilter(e.target.value)} className={selectCls}>
-            <option value="">All members</option>
-            {members.map((m) => (
-              <option key={m.userId} value={m.userId}>
-                {m.name || m.email}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-dim" />
-        </div>
+        <Dropdown
+          ariaLabel="Filter by member"
+          label={memberFilter ? (memberById.get(memberFilter) ?? "Member") : "All members"}
+          value={memberFilter}
+          onChange={setMemberFilter}
+          options={[
+            { value: "", label: "All members" },
+            ...members.map((m) => ({ value: m.userId, label: m.name || m.email })),
+          ]}
+        />
 
-        <div className="relative">
-          <button
-            onClick={() => setDateOpen((o) => !o)}
-            className="flex items-center gap-2 border border-border bg-surface px-3.5 py-2.5 text-[12.5px] hover:border-accent"
-          >
-            {dateLabel}
-            <ChevronDown size={12} className="text-dim" />
-          </button>
-          {dateOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setDateOpen(false)} />
-              <div className="absolute left-0 top-[calc(100%+4px)] z-20 min-w-[220px] border border-border-strong bg-surface">
-                {DATE_CHOICES.map((d) => (
-                  <button
-                    key={d.value}
-                    onClick={() => {
-                      setDateChoice(d.value);
-                      if (d.value !== "custom") setDateOpen(false);
-                    }}
-                    className={`block w-full px-3.5 py-2.5 text-left text-[13px] hover:bg-surface-2 ${
-                      dateChoice === d.value ? "text-accent" : "text-text"
-                    }`}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-                {dateChoice === "custom" && (
-                  <div className="flex flex-col gap-2 border-t border-border p-3">
-                    <div className="flex gap-2">
-                      <input
-                        type="date"
-                        value={customStart}
-                        max={customEnd || undefined}
-                        onChange={(e) => setCustomStart(e.target.value)}
-                        className="min-w-0 flex-1 border border-border bg-bg px-2 py-1.5 text-xs [color-scheme:dark]"
-                      />
-                      <input
-                        type="date"
-                        value={customEnd}
-                        min={customStart || undefined}
-                        onChange={(e) => setCustomEnd(e.target.value)}
-                        className="min-w-0 flex-1 border border-border bg-bg px-2 py-1.5 text-xs [color-scheme:dark]"
-                      />
-                    </div>
-                    <button
-                      disabled={!customStart || !customEnd}
-                      onClick={() => {
-                        setCustomApplied({ start: customStart, end: customEnd });
-                        setDateOpen(false);
-                      }}
-                      className="rounded-full bg-accent py-2 text-[12.5px] font-semibold text-accent-ink hover:bg-accent-hover disabled:opacity-50"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                )}
+        <Dropdown
+          ariaLabel="Filter by date"
+          label={dateLabel}
+          value={dateChoice}
+          onChange={(v) => setDateChoice(v as DateChoice)}
+          closeOnSelect={(v) => v !== "custom"}
+          options={DATE_CHOICES}
+          footer={({ close }) =>
+            dateChoice === "custom" && (
+              <div className="flex flex-col gap-2 border-t border-border p-3">
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    aria-label="Start date"
+                    value={customStart}
+                    max={customEnd || undefined}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                    className="min-w-0 flex-1 border border-border bg-bg px-2 py-1.5 text-xs [color-scheme:dark]"
+                  />
+                  <input
+                    type="date"
+                    aria-label="End date"
+                    value={customEnd}
+                    min={customStart || undefined}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                    className="min-w-0 flex-1 border border-border bg-bg px-2 py-1.5 text-xs [color-scheme:dark]"
+                  />
+                </div>
+                <button
+                  disabled={!customStart || !customEnd}
+                  onClick={() => {
+                    setCustomApplied({ start: customStart, end: customEnd });
+                    close();
+                  }}
+                  className="rounded-full bg-accent py-2 text-[12.5px] font-semibold text-accent-ink hover:bg-accent-hover disabled:opacity-50"
+                >
+                  Apply
+                </button>
               </div>
-            </>
-          )}
-        </div>
+            )
+          }
+        />
+
+        {filtersActive && (
+          <button onClick={clearFilters} className="text-[12.5px] text-accent hover:text-accent-hover hover:underline">
+            Clear filters
+          </button>
+        )}
 
         <div className="flex-1" />
 
@@ -347,7 +396,11 @@ export default function StudioLibrary() {
       </div>
 
       {loading && items.length === 0 ? (
-        <p className="py-16 text-center text-sm text-dim">Loading…</p>
+        <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5" aria-busy="true" aria-label="Loading">
+          {Array.from({ length: 10 }, (_, i) => (
+            <div key={i} className="aspect-square animate-pulse border border-border bg-surface" />
+          ))}
+        </div>
       ) : items.length === 0 ? (
         <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3.5 text-center text-dim">
           <span className="text-4xl opacity-50">▢</span>
@@ -361,16 +414,23 @@ export default function StudioLibrary() {
       ) : (
         <>
           {view === "grid" ? (
-            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
-              {items.map((g) => (
+            <div
+              className={`grid grid-cols-2 gap-3.5 transition-opacity sm:grid-cols-3 lg:grid-cols-5 ${
+                itemsLoading && !loadingMore ? "opacity-60" : ""
+              }`}
+            >
+              {items.map((g, i) => (
                 <button
                   key={g.jobId}
                   onClick={() => onItemClick(g)}
-                  className={`relative aspect-square overflow-hidden border bg-surface text-left ${
-                    selected.has(g.jobId) ? "border-accent" : "border-border"
-                  }`}
+                  aria-current={g.jobId === detailId ? "true" : undefined}
+                  className={`group relative aspect-square overflow-hidden border bg-surface text-left outline-none transition-colors focus-visible:border-accent ${
+                    selected.has(g.jobId) || g.jobId === detailId
+                      ? "border-accent"
+                      : "border-border hover:border-border-strong"
+                  } ${g.jobId === detailId ? "ring-1 ring-accent" : ""}`}
                 >
-                  {thumb(g, "20vw")}
+                  {thumb(g, GRID_SIZES, i < PRIORITY_TILES)}
                   {selectMode && <span className="absolute left-2 top-2">{checkbox(g)}</span>}
                 </button>
               ))}
@@ -397,10 +457,13 @@ export default function StudioLibrary() {
           {hasMore && (
             <button
               onClick={() => load(offset + PAGE_SIZE, false)}
-              disabled={loading}
-              className="mx-auto rounded-full border border-border-strong px-6 py-2.5 text-[13px] font-medium hover:border-accent disabled:opacity-60"
+              disabled={loading || loadingMore}
+              className="mx-auto flex items-center gap-2 rounded-full border border-border-strong px-6 py-2.5 text-[13px] font-medium hover:border-accent disabled:opacity-60"
             >
-              {loading ? "Loading…" : "Load more"}
+              {loadingMore && (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-border-strong border-t-accent" />
+              )}
+              {loadingMore ? "Loading…" : "Load more"}
             </button>
           )}
         </>
@@ -410,7 +473,7 @@ export default function StudioLibrary() {
         <DetailPanel
           item={detail}
           toolLabel={labelFor(detail)}
-          memberName={(detail.userId && memberById.get(detail.userId)) || null}
+          memberName={detail.userId ? (memberById.get(detail.userId) ?? (members.length ? "Former member" : null)) : null}
           onClose={() => setDetailId(null)}
           onStep={stepDetail}
           canStep={viewable.length > 1}

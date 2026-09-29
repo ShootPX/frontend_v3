@@ -8,6 +8,8 @@ export type BillingPlan = {
   credits: number;
   info: string[];
   tag: string;
+  /** Subscriptions only; credit packs don't carry it. */
+  isPopular?: boolean;
   sortOrder: number;
 };
 

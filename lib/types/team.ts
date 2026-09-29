@@ -46,6 +46,27 @@ export type TeamBilling = {
   plan: string | null;
   subscriptionStatus: string | null;
   currentPeriodEnd: string | null;
+  /** An upgrade waiting on payment; `plan` is the target plan's slug. The current plan stays live meanwhile. */
+  pendingSwitch?: { plan: string | null; expiresAt: string | null } | null;
+};
+
+export type BillingHistoryItem = {
+  id: string;
+  type: "subscription_grant" | "switch_transfer" | "topup_purchase" | (string & {});
+  pool: "subscription" | "topup" | (string & {});
+  credits: number;
+  balanceAfter: number | null;
+  plan: string | null; // plan slug, for subscription entries
+  period: string | null; // week | month | year
+  cycle: number | null;
+  amountPaid: number | null; // paise; null for free slices and transfers
+  reference: string | null;
+  createdAt: string | null;
+};
+
+export type BillingHistoryResponse = {
+  items: BillingHistoryItem[];
+  nextCursor: string | null;
 };
 
 export type TeamUsagePeriod = "week" | "month";
