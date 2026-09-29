@@ -6,6 +6,7 @@ import type { Tool } from "@/lib/types/tool";
 import { iconForTool } from "@/lib/tools/icon-map";
 import { categoryRank, isLive } from "@/lib/types/tool";
 import { titleCase } from "@/lib/tools/group-by-category";
+import { categoryBlurbs } from "@/content/tools-grid";
 
 export function HomeTools({ tools }: { tools: Tool[] }) {
   const categories = useMemo(() => {
@@ -22,7 +23,7 @@ export function HomeTools({ tools }: { tools: Tool[] }) {
   const live = filtered.filter(isLive).sort((a, b) => a.cardSortOrder - b.cardSortOrder);
 
   return (
-    <div className="flex flex-col gap-4 border-b border-border px-11 py-7">
+    <div className="flex flex-col gap-3 border-b border-border px-11 py-5">
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setFilter("All")}
@@ -30,7 +31,7 @@ export function HomeTools({ tools }: { tools: Tool[] }) {
             filter === "All" ? "border-accent text-text" : "border-transparent text-dim"
           }`}
         >
-          All tools
+          Live tools
         </button>
         {categories.map((c) => (
           <button
@@ -48,6 +49,10 @@ export function HomeTools({ tools }: { tools: Tool[] }) {
         </Link>
       </div>
 
+      {filter !== "All" && categoryBlurbs[titleCase(filter)] && (
+        <p className="-mt-1 text-[12.5px] text-dim">{categoryBlurbs[titleCase(filter)]}</p>
+      )}
+
       {tools.length === 0 && filter === "All" ? (
         <p className="text-center text-sm text-dim">Couldn&apos;t load live tool data right now.</p>
       ) : live.length === 0 ? (
@@ -62,10 +67,10 @@ export function HomeTools({ tools }: { tools: Tool[] }) {
               <Link
                 key={t.featureType}
                 href={`/studio/tools/${t.featureType}`}
-                className="flex flex-col gap-1.5 bg-bg px-4 py-3.5 hover:bg-surface"
+                className="group flex flex-col gap-1.5 bg-bg px-4 py-3.5 transition-colors hover:bg-surface focus-visible:bg-surface focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
               >
-                <Icon size={18} className="text-text/85" />
-                <span className="text-[13.5px] font-semibold">{t.displayName}</span>
+                <Icon size={18} className="text-text/85 transition-colors group-hover:text-accent" />
+                <span className="text-[13.5px] font-semibold transition-colors group-hover:text-accent">{t.displayName}</span>
                 <span className="text-[11.5px] leading-snug text-muted">{t.description}</span>
               </Link>
             );

@@ -7,12 +7,23 @@ import { PROMPT_MAX_LENGTH } from "./EnhancePromptButton";
 import { ColorField } from "./ColorField";
 import { creditsForQuality, resolutionMultipliers, usesQualityPricing } from "@/lib/tools/credit-estimate";
 import { SizeField } from "./SizeField";
+import { AutoGrowTextarea } from "@/components/ui/AutoGrowTextarea";
+import { Dropdown } from "@/components/ui/Dropdown";
 
 const PROMPT_PLACEHOLDERS: Record<string, string> = {
   listing_photoshoot: "Describe the scene, e.g. 'wet stone ledge, cold morning light'",
   creative_photoshoot: "Describe the scene in your own words, e.g. 'wet stone ledge, cold morning light'",
   recolor: "e.g. 'the shirt', or leave blank to auto-detect",
 };
+
+// How the prompt combines with the rest of the form, per tool. Creative sends
+// idea and prompt together and the backend merges them into one refined prompt.
+const PROMPT_HINTS: Record<string, string> = {
+  creative_photoshoot: "Optional — add details and they'll be merged with the selected idea.",
+};
+
+// "1k" reads better as "1K".
+const prettyLabel = (label: string) => (/^\d+k$/i.test(label.trim()) ? label.trim().toUpperCase() : label);
 
 export function ParamFieldInput({
   field,
@@ -50,18 +61,17 @@ export function ParamFieldInput({
     return (
       <div className="flex flex-col gap-1.5">
         {label}
-        <select
+        <Dropdown
+          fullWidth
+          ariaLabel={field.label}
+          label={(() => {
+            const current = (field.options ?? []).find((o) => optionValue(o) === value);
+            return current ? optionLabel(current) : "None";
+          })()}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full border border-border bg-surface px-3 py-[11px] text-[13px] text-text outline-none focus:border-accent"
-        >
-          {!field.default && <option value="">Select…</option>}
-          {(field.options ?? []).map((o) => (
-            <option key={optionValue(o)} value={optionValue(o)}>
-              {optionLabel(o)}
-            </option>
-          ))}
-        </select>
+          onChange={onChange}
+          options={(field.options ?? []).map((o) => ({ value: optionValue(o), label: optionLabel(o) }))}
+        />
       </div>
     );
   }
@@ -75,9 +85,9 @@ export function ParamFieldInput({
       <SettingsRow
         label={field.label}
         currentValue={value}
-        currentLabel={current ? optionLabel(current) : "None"}
+        currentLabel={current ? prettyLabel(optionLabel(current)) : "None"}
         currentMultiplier={mult[value]}
-        options={options.map((o) => ({ value: optionValue(o), label: optionLabel(o), multiplier: mult[optionValue(o)] }))}
+        options={options.map((o) => ({ value: optionValue(o), label: prettyLabel(optionLabel(o)), multiplier: mult[optionValue(o)] }))}
         onSelect={onChange}
       />
     );
@@ -94,9 +104,9 @@ export function ParamFieldInput({
       <SettingsRow
         label={field.label}
         currentValue={value}
-        currentLabel={current ? optionLabel(current) : "None"}
+        currentLabel={current ? prettyLabel(optionLabel(current)) : "None"}
         currentCredits={cost(value)}
-        options={options.map((o) => ({ value: optionValue(o), label: optionLabel(o), credits: cost(optionValue(o)) }))}
+        options={options.map((o) => ({ value: optionValue(o), label: prettyLabel(optionLabel(o)), credits: cost(optionValue(o)) }))}
         onSelect={onChange}
       />
     );
@@ -110,11 +120,11 @@ export function ParamFieldInput({
       <SettingsRow
         label={field.label}
         currentValue={value}
-        currentLabel={current ? optionLabel(current) : "None"}
+        currentLabel={current ? prettyLabel(optionLabel(current)) : "None"}
         currentCredits={currentBadge}
         options={options.map((o) => ({
           value: optionValue(o),
-          label: optionLabel(o),
+          label: prettyLabel(optionLabel(o)),
           credits: optionCreditCost(o),
         }))}
         onSelect={onChange}
@@ -158,13 +168,19 @@ export function ParamFieldInput({
   // to hold a sentence or two, not a single short value.
   return (
     <div className="flex flex-col gap-2">
-      {label}
-      <textarea
+      <div className="flex flex-col gap-0.5">
+        {label}
+        {field.name === "prompt" && PROMPT_HINTS[featureType ?? ""] && (
+          <span className="text-[11px] text-dim">{PROMPT_HINTS[featureType ?? ""]}</span>
+        )}
+      </div>
+      <AutoGrowTextarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={PROMPT_PLACEHOLDERS[featureType ?? ""]}
         maxLength={PROMPT_MAX_LENGTH}
-        className={`${featureType === "recolor" ? "h-[70px]" : "h-16"} resize-none border border-border bg-surface p-3 text-[13px] text-text outline-none focus:border-accent`}
+        maxHeight={200}
+        className="border border-border bg-surface p-3 text-[13px] text-text outline-none focus:border-accent"
       />
     </div>
   );

@@ -26,7 +26,7 @@ export default async function Home() {
 
   return (
     <>
-      <JsonLd data={buildHomeJsonLd()} />
+      <JsonLd data={buildHomeJsonLd(billing)} />
       <HomeAuthRedirect />
       <Header />
       <main>

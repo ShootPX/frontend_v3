@@ -17,6 +17,15 @@ type Props = {
 
 const MAX_ZOOM = 4;
 
+/** "21 Sep 2026, 3:58 PM" */
+function formatDateTime(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const month = d.toLocaleDateString("en-US", { month: "short" });
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `${d.getDate()} ${month} ${d.getFullYear()}, ${time}`;
+}
+
 export function DetailPanel({ item, toolLabel, memberName, onClose, onStep, canStep, onDownload }: Props) {
   const [hover, setHover] = useState(false);
   const [full, setFull] = useState(false);
@@ -25,13 +34,22 @@ export function DetailPanel({ item, toolLabel, memberName, onClose, onStep, canS
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      if (full) setFull(false);
-      else onClose();
+      if (e.key === "Escape") {
+        if (full) setFull(false);
+        else onClose();
+        return;
+      }
+      // Arrow keys step through the library while the sidebar (not the
+      // full-size view) is showing.
+      if (full || !canStep || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      e.preventDefault();
+      onStep(e.key === "ArrowLeft" ? -1 : 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [full, onClose]);
+  }, [full, onClose, onStep, canStep]);
 
   // Scroll-to-zoom needs a non-passive listener to stop the page scrolling behind.
   useEffect(() => {
@@ -45,7 +63,7 @@ export function DetailPanel({ item, toolLabel, memberName, onClose, onStep, canS
     return () => el.removeEventListener("wheel", onWheel);
   }, [full]);
 
-  const date = new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const date = formatDateTime(item.createdAt);
   const rows: [string, string][] = [["Tool", toolLabel]];
   if (memberName) rows.push(["Member", memberName]);
   rows.push(["Date", date]);
@@ -110,7 +128,7 @@ export function DetailPanel({ item, toolLabel, memberName, onClose, onStep, canS
           </div>
 
           <div>
-            <div className="text-[15px] font-semibold">{item.title || toolLabel}</div>
+            <div className="text-[15px] font-semibold">{toolLabel}</div>
             <div className="mt-3.5 flex flex-col gap-[9px]">
               {rows.map(([k, v]) => (
                 <div key={k} className="flex justify-between text-[12.5px]">
