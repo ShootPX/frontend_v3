@@ -47,13 +47,13 @@ export function ProductsStep({
 
   const setSlot = (id: string, files: File[]) => onChange({ ...state, files: { ...state.files, [id]: files } });
 
-  const slotRow = (id: string, label: React.ReactNode) => {
+  const slotRow = (id: string, label: React.ReactNode, action?: React.ReactNode) => {
     const files = state.files[id] ?? [];
     return (
       <div key={id} className="flex flex-col gap-2.5 border border-border bg-surface p-3.5">
         <div className="flex items-center gap-2.5">
           {label}
-          <span className="ml-auto font-mono text-[10.5px] text-dim">{files.length} img</span>
+          {action && <div className="ml-auto flex-none">{action}</div>}
         </div>
         <ImageSlot
           files={files}
@@ -61,7 +61,10 @@ export function ProductsStep({
           onAdd={(incoming) => setSlot(id, onAddFiles(files, incoming))}
           onRemove={(i) => setSlot(id, files.filter((_, j) => j !== i))}
         />
-        <span className="text-[11px] text-dim">Front, back, side, detail — as many angles as you have</span>
+        <div className="flex items-center justify-between text-[11px] text-dim">
+          <span>Front, back, side, detail angles</span>
+          <span className="font-mono">{files.length} img</span>
+        </div>
       </div>
     );
   };
@@ -93,8 +96,7 @@ export function ProductsStep({
             {state.extras.map((x) =>
               slotRow(
                 x.id,
-                <>
-                  <input
+                <input
                     value={x.label}
                     onChange={(e) =>
                       onChange({
@@ -105,18 +107,17 @@ export function ProductsStep({
                     placeholder="e.g. Watch, Hat, Shoes, Bag"
                     maxLength={40}
                     className="min-w-0 flex-1 border border-border bg-bg px-2.5 py-1.5 text-[12.5px] text-text outline-none focus:border-accent"
-                  />
-                  <button
-                    onClick={() => {
-                      const { [x.id]: _removed, ...rest } = state.files;
-                      void _removed;
-                      onChange({ ...state, files: rest, extras: state.extras.filter((y) => y.id !== x.id) });
-                    }}
-                    className="text-[12px] text-dim hover:text-text"
-                  >
-                    Remove
-                  </button>
-                </>,
+                  />,
+                <button
+                  onClick={() => {
+                    const { [x.id]: _removed, ...rest } = state.files;
+                    void _removed;
+                    onChange({ ...state, files: rest, extras: state.extras.filter((y) => y.id !== x.id) });
+                  }}
+                  className="text-[12px] text-dim hover:text-text"
+                >
+                  Remove
+                </button>,
               ),
             )}
             {state.extras.length < MAX_EXTRA_SLOTS && (
@@ -147,13 +148,9 @@ export function ProductsStep({
 
         <div className={`flex items-center justify-between text-[11.5px] ${over ? "text-[#ff6b5e]" : "text-dim"}`}>
           <span>
-            {totalImages} / {MAX_TOTAL_IMAGES} images
+            {totalImages} of {MAX_TOTAL_IMAGES} images added
           </span>
-          <span>
-            {over
-              ? `Remove ${totalImages - MAX_TOTAL_IMAGES} to continue`
-              : `1 model + ${productImageCount(state)} product + ${state.refs.length} reference`}
-          </span>
+          {over && <span>Remove {totalImages - MAX_TOTAL_IMAGES} to continue</span>}
         </div>
       </div>
     </>

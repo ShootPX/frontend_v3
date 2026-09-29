@@ -77,11 +77,11 @@ export function ImageDropzone({
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`flex cursor-pointer items-center justify-center gap-2 border-[1.5px] border-dashed px-4 py-4 ${
+        className={`flex min-h-[140px] cursor-pointer flex-col items-center justify-center gap-2.5 border-[1.5px] border-dashed px-4 py-8 ${
           dragging ? "border-accent bg-accent/5" : "border-border-strong hover:border-accent"
         }`}
       >
-        <Upload size={16} className="text-dim" />
+        <Upload size={22} className="text-dim" />
         <span className="text-[13.5px] text-muted">
           {label} <span className="text-accent">select an image</span>
         </span>
@@ -100,15 +100,15 @@ export function ImageDropzone({
       {files.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {files.map((f, i) => (
-            <div key={`${f.name}-${i}`} className="group relative h-[66px] w-[66px] flex-none overflow-hidden border border-border">
+            <div key={`${f.name}-${i}`} className="group relative h-[72px] w-[72px] flex-none overflow-hidden border border-border">
               {/* eslint-disable-next-line @next/next/no-img-element -- transient local blob preview, not worth next/image's overhead */}
               <img src={previewUrls[i]} alt={f.name} className="h-full w-full object-cover" />
               <button
                 onClick={() => removeAt(i)}
-                className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100"
+                className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/75 text-white hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 aria-label={`Remove ${f.name}`}
               >
-                <X size={11} />
+                <X size={12} />
               </button>
             </div>
           ))}

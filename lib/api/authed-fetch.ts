@@ -9,12 +9,17 @@ export class ApiError extends Error {
   }
 }
 
-/** The backend's own message from an error body like {"detail": "..."}, else the raw text. */
+/** The backend's own message from an error body like {"detail": "..."} or {"detail": {"message": "..."}}, else the raw text. */
 export function apiErrorDetail(err: unknown, fallback: string): string {
   if (!(err instanceof Error)) return fallback;
   try {
     const parsed = JSON.parse(err.message) as { detail?: unknown };
     if (typeof parsed.detail === "string" && parsed.detail) return parsed.detail;
+    // Some endpoints (e.g. plan switch) send detail as {code, message, ...}.
+    if (parsed.detail && typeof parsed.detail === "object") {
+      const message = (parsed.detail as { message?: unknown }).message;
+      if (typeof message === "string" && message) return message;
+    }
   } catch {
     // not JSON — use the text as-is
   }

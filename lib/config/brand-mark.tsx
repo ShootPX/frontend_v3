@@ -1,4 +1,4 @@
-/** The ShootPX mark (same artwork as app/icon.svg), for generated images. */
+/** The ShootPX mark (same symbol as app/icon.png), for generated images. */
 export function BrandMark({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">

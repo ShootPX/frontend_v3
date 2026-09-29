@@ -1,22 +1,13 @@
 "use client";
 
 import { LogoMark } from "@/components/ui/Logo";
+import { Avatar } from "@/components/ui/Avatar";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { studioNavItems } from "./Sidebar.nav-items";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { useTeam } from "@/lib/studio/TeamContext";
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 function isActive(pathname: string, href: string) {
   return href === "/studio" ? pathname === "/studio" : pathname.startsWith(href);
@@ -27,7 +18,6 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { profile } = useAuth();
-  const { activeTeam } = useTeam();
 
   const label = profile?.name || profile?.email || "Account";
 
@@ -60,10 +50,15 @@ export function Sidebar() {
         </div>
         <button
           onClick={() => router.push("/studio/settings")}
-          title={`${label} · ${activeTeam?.name ?? "Team"}`}
-          className="mt-auto flex h-9 w-9 flex-none items-center justify-center border border-border-strong text-[11px] font-medium hover:border-accent"
+          title={label}
+          className="mt-auto flex-none"
         >
-          {initials(label)}
+          <Avatar
+            src={profile?.avatarUrl}
+            name={label}
+            sizes="36px"
+            className="h-9 w-9 border border-border-strong text-[11px] font-medium hover:border-accent"
+          />
         </button>
       </div>
     );
@@ -72,8 +67,10 @@ export function Sidebar() {
   return (
     <div className="flex w-[180px] flex-none flex-col gap-5 overflow-auto border-r border-border bg-bg px-3.5 py-4">
       <div className="flex items-center gap-2.5">
-        <LogoMark size={26} />
-        <span className="font-heading text-[17px] font-bold tracking-tight">ShootPX</span>
+        <Link href="/studio" aria-label="ShootPX home" className="flex items-center gap-2.5">
+          <LogoMark size={26} />
+          <span className="font-heading text-[17px] font-bold tracking-tight">ShootPX</span>
+        </Link>
         <button
           onClick={() => setOpen(false)}
           title="Collapse sidebar"
@@ -108,12 +105,14 @@ export function Sidebar() {
         onClick={() => router.push("/studio/settings")}
         className="mt-auto flex items-center gap-2.5 border border-border p-3 text-left hover:bg-surface"
       >
-        <span className="flex h-8 w-8 flex-none items-center justify-center border border-border-strong bg-surface text-[11px] font-medium">
-          {initials(label)}
-        </span>
-        <span className="min-w-0">
-          <span className="block truncate text-[13px] font-medium">{label}</span>
-          <span className="block truncate text-[11px] text-dim">{activeTeam?.name ?? "Team"}</span>
+        <Avatar
+          src={profile?.avatarUrl}
+          name={label}
+          sizes="32px"
+          className="h-8 w-8 border border-border-strong bg-surface text-[11px] font-medium"
+        />
+        <span className="min-w-0 flex-1 break-words text-[13px] font-medium leading-tight" title={label}>
+          {label}
         </span>
       </button>
     </div>

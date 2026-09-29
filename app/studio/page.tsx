@@ -9,7 +9,7 @@ export default async function StudioHome() {
 
   return (
     <div className="flex flex-col">
-      <HomepageCarousel slides={slides} />
+      <HomepageCarousel slides={slides} tools={tools} />
       <HomeTools tools={tools} />
       <RecentWork />
     </div>

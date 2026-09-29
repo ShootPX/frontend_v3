@@ -1,5 +1,6 @@
 "use client";
 
+import { Avatar } from "@/components/ui/Avatar";
 import { useEffect, useRef, useState } from "react";
 import { useTeam } from "@/lib/studio/TeamContext";
 import { useToast } from "@/lib/studio/ToastContext";
@@ -28,15 +29,6 @@ function friendlyRenameError(err: unknown): string {
 function friendlyCreateError(err: unknown): string {
   if (err instanceof ApiError && err.status === 400) return "Team name can't be empty.";
   return "Couldn't create the team.";
-}
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 export function TeamTab() {
@@ -308,9 +300,12 @@ export function TeamTab() {
                 key={m.userId}
                 className="flex items-center gap-3.5 border-b border-border px-4 py-3 last:border-b-0"
               >
-                <span className="flex h-8 w-8 flex-none items-center justify-center border border-border-strong bg-surface-2 text-[11px] font-medium">
-                  {initials(m.name || m.email)}
-                </span>
+                <Avatar
+                  src={m.avatarUrl}
+                  name={m.name || m.email}
+                  sizes="32px"
+                  className="h-8 w-8 border border-border-strong bg-surface-2 text-[11px] font-medium"
+                />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13.5px] font-medium">{m.name || m.email}</div>
                   <div className="text-xs text-dim">{m.email}</div>
@@ -493,13 +488,17 @@ export function TeamTab() {
                 one or restore this one.
               </p>
             )}
-            <label className="flex flex-col gap-2 text-[12.5px] text-dim">
-              Type <span className="font-semibold text-text">{activeTeam.name}</span> to confirm
+            <label className="flex flex-col gap-2 text-[12.5px] text-muted">
+              <span>
+                Type &ldquo;<span className="font-semibold text-text">{activeTeam.name}</span>&rdquo; to confirm
+              </span>
               <input
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
                 disabled={deleting}
                 autoFocus
+                autoComplete="off"
+                spellCheck={false}
                 className="border border-border bg-surface px-3 py-2.5 text-[13.5px] text-text focus:border-[#ff5c4d]"
               />
             </label>
@@ -513,7 +512,7 @@ export function TeamTab() {
               </button>
               <button
                 onClick={handleDeleteTeam}
-                disabled={deleting || deleteConfirmText.trim() !== activeTeam.name}
+                disabled={deleting || deleteConfirmText !== activeTeam.name}
                 className="flex-1 rounded-full border border-[#ff5c4d] py-2.5 text-[13.5px] text-[#ff8a6b] hover:bg-[#ff5c4d]/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {deleting ? "Deleting…" : "Delete team"}

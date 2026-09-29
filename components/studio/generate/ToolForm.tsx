@@ -5,6 +5,7 @@ import { ImageDropzone } from "./ImageDropzone";
 import { ParamFieldInput } from "./ParamFieldInput";
 import { OutputCountField } from "./OutputCountField";
 import { EnhancePromptButton } from "./EnhancePromptButton";
+import { ScrollFade } from "@/components/ui/ScrollFade";
 import { CreditCostBadge } from "./CreditCostBadge";
 import type { ToolSchema } from "@/lib/types/generate";
 import { optionValue } from "@/lib/types/generate";
@@ -80,6 +81,7 @@ export function ToolForm({
   const perImageCost = estimateCreditsPerImage(schema.featureType, schema, values);
   const fixedCost = hasNoCostVaryingFields(schema.featureType, schema);
   const needsImages = schema.maxInputImages > 0;
+  const missingImage = needsImages && images.length === 0;
 
   function setValue(name: string, v: string) {
     setValues((prev) => ({ ...prev, [name]: v }));
@@ -137,7 +139,7 @@ export function ToolForm({
 
   return (
     <div className="flex h-full w-[380px] flex-none flex-col border-r border-border">
-      <div className="flex-1 overflow-auto px-[26px] pb-5 pt-[26px]">
+      <ScrollFade className="flex-1" contentClassName="px-[26px] pb-5 pt-[26px]">
         {needsImages && (
           <div className="mb-6 mt-0">
             <h2 className="font-heading text-[19px] font-semibold tracking-tight">{uploadTitle}</h2>
@@ -165,17 +167,18 @@ export function ToolForm({
         )}
 
         {promptFields.length > 0 && <div className="flex flex-col gap-2.5">{promptFields.map(renderField)}</div>}
-      </div>
+      </ScrollFade>
 
       <div className="flex-none border-t border-border px-[26px] py-4 flex flex-col gap-2">
         {error && <p className="text-sm text-[#ff8a6b]">{error}</p>}
         <button
           onClick={handleSubmit}
-          disabled={submitting || running || enhancing}
+          disabled={submitting || running || enhancing || missingImage}
           className="rounded-full bg-accent py-3 text-sm font-semibold text-accent-ink hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-accent"
         >
           {submitting ? "Starting…" : running ? "Generating…" : enhancing ? "Enhancing prompt…" : "Generate"}
         </button>
+        {missingImage && <p className="text-center text-[12px] text-dim">Upload a photo to start</p>}
         <CreditCostBadge perImage={perImageCost} count={outputCount} fixedCost={fixedCost} />
       </div>
     </div>
