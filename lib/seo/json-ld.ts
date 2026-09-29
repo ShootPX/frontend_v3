@@ -1,7 +1,8 @@
 import { siteConfig } from "@/lib/config/site";
-import { faqs } from "@/components/sections/Faq.content";
+import { faqs } from "@/content/faq";
 
-export function buildJsonLd() {
+/** Site-wide entities. Safe on every page (the SEO pages reference the "#org" id). */
+export function buildSiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -11,7 +12,7 @@ export function buildJsonLd() {
         name: siteConfig.name,
         url: `${siteConfig.url}/`,
         description:
-          "AI product photography, product video and UGC ad generation platform for e-commerce sellers.",
+          "AI product photography platform for e-commerce sellers.",
         sameAs: Object.values(siteConfig.social),
       },
       {
@@ -21,18 +22,22 @@ export function buildJsonLd() {
         name: siteConfig.name,
         publisher: { "@id": `${siteConfig.url}/#org` },
       },
+    ],
+  };
+}
+
+/** Landing-page-only entities: its FAQ and the product summary. Other pages carry their own. */
+export function buildHomeJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
       {
         "@type": "SoftwareApplication",
         name: siteConfig.name,
         applicationCategory: "DesignApplication",
         operatingSystem: "Web browser",
         description:
-          "Turn one product photo into studio photoshoots, product motion videos and AI UGC ads for Shopify, Amazon and Etsy sellers.",
-        offers: [
-          { "@type": "Offer", name: "Starter credits", price: "1000", priceCurrency: "INR" },
-          { "@type": "Offer", name: "Popular credits", price: "2500", priceCurrency: "INR" },
-        ],
-        aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "312" },
+          "Turn one product photo into studio-style images: listing photoshoots, creative scenes, recolor and model shoots for e-commerce sellers.",
       },
       {
         "@type": "FAQPage",

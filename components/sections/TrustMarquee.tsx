@@ -1,9 +1,9 @@
-import { marqueeItems } from "./TrustMarquee.content";
+import { marqueeItems } from "@/content/trust-marquee";
 
 export function TrustMarquee() {
   return (
     <section
-      aria-label="Trusted by"
+      aria-label="Tools"
       className="mt-14 overflow-hidden border-y border-border bg-bg-alt py-4"
     >
       <div className="flex w-max animate-marquee gap-11">

@@ -3,12 +3,30 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { navItems } from "./Header.nav-items";
+import { Logo } from "@/components/ui/Logo";
+import { navItems, type NavItem } from "@/content/header-nav";
 import { HeaderAuthArea } from "./Header.AuthArea";
+import { useLiveTools } from "./useLiveTools";
 
 export function Header() {
   const [openNav, setOpenNav] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const liveTools = useLiveTools();
+
+  // The Tools dropdown lists the live tools from the catalog, not marketing copy.
+  const items: NavItem[] = navItems.map((n) =>
+    n.id === "tools" && liveTools
+      ? {
+          ...n,
+          items: liveTools.map((t) => ({
+            name: t.displayName,
+            desc: t.description ?? "",
+            href: "/#tools",
+            badge: null,
+          })),
+        }
+      : n,
+  );
 
   useEffect(() => {
     function handleOutsideClick(e: MouseEvent) {
@@ -23,18 +41,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center gap-5 px-5 py-3.5">
-        <Link href="#top" className="flex flex-none items-center gap-2">
-          <svg width="28" height="28" viewBox="0 0 28 28" className="flex-none">
-            <rect width="28" height="28" rx="7" fill="var(--color-accent)" />
-            <circle cx="14" cy="14" r="6.4" fill="none" stroke="var(--color-accent-ink)" strokeWidth="2.6" />
-            <circle cx="14" cy="14" r="1.8" fill="var(--color-accent-ink)" />
-          </svg>
-          <span className="whitespace-nowrap font-heading text-lg font-bold tracking-tight">ShootPX</span>
+        <Link href="/#top" className="flex-none">
+          <Logo />
         </Link>
 
         <nav ref={navRef} className="hidden min-w-0 flex-1 justify-center lg:flex">
           <div className="flex items-center gap-1 rounded-full border border-border bg-surface p-1.5">
-            {navItems.map((n) => {
+            {items.map((n) => {
               const isOpen = openNav === n.id && !!n.items;
               return (
                 <div key={n.id} className="relative">
@@ -95,7 +108,7 @@ export function Header() {
 
         <div className="ml-auto flex flex-none items-center gap-3.5">
           <Link
-            href="#start"
+            href="/#start"
             className="hidden whitespace-nowrap font-mono text-[11.5px] tracking-wide text-muted sm:inline"
           >
             BOOK DEMO
