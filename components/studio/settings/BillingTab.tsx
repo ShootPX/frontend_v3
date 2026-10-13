@@ -132,10 +132,10 @@ export function BillingTab() {
         </p>
       )}
 
-      <div className="border border-border p-5">
+      <div className="border border-border p-4 md:p-5">
         <div className="font-mono text-[10.5px] tracking-wide text-muted">CURRENT PLAN</div>
         {billing.plan && subActive ? (
-          <div className="mt-2.5 flex items-start justify-between gap-4">
+          <div className="mt-2.5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <div className="flex items-center gap-2.5">
                 <span className="font-heading text-[22px] font-bold">{planName}</span>
@@ -161,16 +161,16 @@ export function BillingTab() {
               )}
             </div>
             {isOwner && (
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col gap-2 md:items-end">
                 <button
                   onClick={() => openBuyModal("sub")}
-                  className="whitespace-nowrap rounded-full border border-border-strong px-5 py-2.5 text-[13.5px] font-medium hover:border-accent"
+                  className="whitespace-nowrap rounded-full border border-border-strong px-5 py-3 text-[13.5px] font-medium hover:border-accent md:py-2.5"
                 >
                   Manage subscription
                 </button>
                 <button
                   onClick={() => setConfirmCancel(true)}
-                  className="text-[12px] text-dim underline-offset-2 hover:text-[#ff8a6b] hover:underline"
+                  className="py-1 text-center text-[12px] text-dim underline-offset-2 hover:text-[#ff8a6b] hover:underline"
                 >
                   Cancel subscription
                 </button>
@@ -192,14 +192,14 @@ export function BillingTab() {
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-4 border border-border p-5">
+      <div className="flex flex-col gap-4 border border-border p-4 md:flex-row md:items-center md:justify-between md:p-5">
         <div>
           <div className="font-mono text-[10.5px] tracking-wide text-muted">CREDIT BALANCE</div>
-          <div className="mt-1 flex items-center gap-2 font-heading text-[30px] font-bold">
-            <CreditIcon size={26} />
-            {billing.totalCredits} credits
+          <div className="mt-1 flex items-center gap-2 font-heading text-[26px] font-bold md:text-[30px]">
+            <CreditIcon size={24} />
+            {billing.totalCredits.toLocaleString("en-IN")} credits
           </div>
-          <div className="mt-1.5 flex gap-4 text-[12.5px] text-muted">
+          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-muted">
             <span>
               Plan credits <span className="font-semibold text-text">{billing.subscriptionCredits}</span>
             </span>
@@ -211,7 +211,7 @@ export function BillingTab() {
         {isOwner && (
           <button
             onClick={() => openBuyModal("credits")}
-            className="whitespace-nowrap rounded-full border border-border-strong px-5 py-2.5 text-[13.5px] font-medium hover:border-accent"
+            className="whitespace-nowrap rounded-full border border-border-strong px-5 py-3 text-[13.5px] font-medium hover:border-accent md:py-2.5"
           >
             Buy credits
           </button>
@@ -220,7 +220,38 @@ export function BillingTab() {
 
       <div>
         <span className="font-mono text-[11px] tracking-widest text-muted">BILLING HISTORY</span>
-        <div className="mt-3 overflow-hidden border border-border">
+        {/* Phones: one compact card per charge instead of a sideways-scrolling table. */}
+        <div className="mt-3 border border-border md:hidden">
+          {historyLoading ? (
+            <p className="p-4 text-center text-[13px] text-dim">Loading…</p>
+          ) : historyError ? (
+            <p className="p-4 text-center text-[13px] text-dim">Couldn&apos;t load billing history right now.</p>
+          ) : rows.length === 0 ? (
+            <p className="p-4 text-center text-[13px] text-dim">No charges yet</p>
+          ) : (
+            rows.map((h) => (
+              <div key={h.id} className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 last:border-b-0">
+                <div className="min-w-0">
+                  <div className="truncate text-[13.5px] font-medium">{describe(h)}</div>
+                  <div className="mt-0.5 text-[12px] text-muted">
+                    {formatDate(h.createdAt) ?? "—"}
+                    {h.amountPaid != null ? ` · ${formatRupees(h.amountPaid)}` : ""}
+                  </div>
+                </div>
+                <div className="flex-none text-right">
+                  <div className={`font-mono text-[14px] font-semibold ${h.credits > 0 ? "text-accent" : ""}`}>
+                    {h.credits > 0 ? "+" : ""}
+                    {h.credits}
+                  </div>
+                  {h.balanceAfter != null && <div className="font-mono text-[11px] text-dim">bal {h.balanceAfter}</div>}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="mt-3 hidden overflow-x-auto border border-border md:block">
+          <div className="min-w-[560px]">
           <div
             className={`grid ${HISTORY_COLS} items-center gap-3 border-b border-border px-4 py-2.5 font-mono text-[10.5px] tracking-wide text-muted`}
           >
@@ -254,6 +285,7 @@ export function BillingTab() {
               </div>
             ))
           )}
+          </div>
         </div>
 
         {nextCursor && !historyLoading && (

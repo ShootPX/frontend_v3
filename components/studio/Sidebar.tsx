@@ -23,7 +23,7 @@ export function Sidebar() {
 
   if (!open) {
     return (
-      <div className="flex w-[76px] flex-none flex-col items-center gap-3.5 overflow-auto border-r border-border bg-bg py-4">
+      <div className="hidden w-[76px] flex-none md:flex md:flex-col items-center gap-3.5 overflow-auto border-r border-border bg-bg py-4">
         <button onClick={() => setOpen(true)} title="Expand sidebar" className="flex-none">
           <LogoMark size={26} />
         </button>
@@ -65,7 +65,7 @@ export function Sidebar() {
   }
 
   return (
-    <div className="flex w-[180px] flex-none flex-col gap-5 overflow-auto border-r border-border bg-bg px-3.5 py-4">
+    <div className="hidden w-[180px] md:flex md:flex-col flex-none gap-5 overflow-auto border-r border-border bg-bg px-3.5 py-4">
       <div className="flex items-center gap-2.5">
         <Link href="/studio" aria-label="ShootPX home" className="flex items-center gap-2.5">
           <LogoMark size={26} />

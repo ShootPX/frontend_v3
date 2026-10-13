@@ -7,6 +7,7 @@ import { TeamProvider } from "@/lib/studio/TeamContext";
 import { TeamBillingProvider } from "@/lib/studio/TeamBillingContext";
 import { ToastProvider } from "@/lib/studio/ToastContext";
 import { Sidebar } from "@/components/studio/Sidebar";
+import { MobileTabBar } from "@/components/studio/MobileTabBar";
 import { Navbar } from "@/components/studio/Navbar";
 import { Toast } from "@/components/studio/Toast";
 import { BuyCreditsModal } from "@/components/studio/BuyCreditsModal";
@@ -31,11 +32,12 @@ export function StudioShell({ children }: { children: React.ReactNode }) {
     <TeamProvider>
       <TeamBillingProvider>
         <ToastProvider>
-          <div className="flex h-screen overflow-hidden">
+          <div className="flex h-dvh overflow-hidden">
             <Sidebar />
             <div className="flex min-w-0 flex-1 flex-col">
               <Navbar />
-              <div className="flex-1 overflow-auto">{children}</div>
+              <div className="min-h-0 flex-1 overflow-auto">{children}</div>
+              <MobileTabBar />
             </div>
           </div>
           <BuyCreditsModal />

@@ -18,7 +18,7 @@ export function ColorField({
 }) {
   const rowRef = useRef<HTMLButtonElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; sheet: boolean } | null>(null);
   // Hue is kept separately: at zero saturation/brightness the hex has no hue,
   // and dragging the square would otherwise snap the hue slider back to red.
   const [hue, setHue] = useState(() => hexToHsv(value).h);
@@ -30,18 +30,25 @@ export function ColorField({
 
   useEffect(() => {
     if (!pos) return;
-    const onDown = (e: MouseEvent) => {
+    const onDown = (e: PointerEvent) => {
       const t = e.target as Node;
       if (!popRef.current?.contains(t) && !rowRef.current?.contains(t)) setPos(null);
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
   }, [pos]);
 
   function open() {
     if (pos) return setPos(null);
     const r = rowRef.current!.getBoundingClientRect();
+    // Phones get a bottom sheet instead of a floating popover.
+    if (window.innerWidth < 768) {
+      setPos({ top: 0, left: 0, sheet: true });
+      setDraft(hex);
+      return;
+    }
     setPos({
+      sheet: false,
       top: Math.max(12, Math.min(r.top, window.innerHeight - POPOVER_H)),
       left: Math.max(12, Math.min(r.right + 14, window.innerWidth - POPOVER_W - 16)),
     });
@@ -49,7 +56,7 @@ export function ColorField({
   }
 
   // Drag helper: reports 0–1 positions inside `el` while the mouse is held.
-  function drag(el: HTMLElement, e: React.MouseEvent, apply: (x: number, y: number) => void) {
+  function drag(el: HTMLElement, e: React.PointerEvent, apply: (x: number, y: number) => void) {
     const update = (clientX: number, clientY: number) => {
       const r = el.getBoundingClientRect();
       apply(
@@ -58,13 +65,15 @@ export function ColorField({
       );
     };
     update(e.clientX, e.clientY);
-    const move = (ev: MouseEvent) => update(ev.clientX, ev.clientY);
+    const move = (ev: PointerEvent) => update(ev.clientX, ev.clientY);
     const up = () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
     };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
   }
 
   function commit(next: string) {
@@ -89,14 +98,16 @@ export function ColorField({
       {pos && (
         <div
           ref={popRef}
-          style={{ top: pos.top, left: pos.left, width: POPOVER_W }}
-          className="fixed z-30 flex flex-col gap-3.5 border border-border-strong bg-surface p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+          style={pos.sheet ? undefined : { top: pos.top, left: pos.left, width: POPOVER_W }}
+          className={`fixed z-[75] flex flex-col gap-3.5 border border-border-strong bg-surface p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] ${
+            pos.sheet ? "inset-x-0 bottom-0 rounded-t-3xl pb-[max(1.25rem,env(safe-area-inset-bottom))]" : ""
+          }`}
         >
           <div
-            onMouseDown={(e) =>
+            onPointerDown={(e) =>
               drag(e.currentTarget, e, (x, y) => commit(hsvToHex({ h: hue, s: x * 100, v: (1 - y) * 100 })))
             }
-            className="relative h-[180px] cursor-crosshair rounded-md"
+            className="relative h-[180px] cursor-crosshair touch-none rounded-md"
             style={{
               backgroundColor: `hsl(${hue},100%,50%)`,
               backgroundImage: "linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent)",
@@ -109,14 +120,14 @@ export function ColorField({
           </div>
 
           <div
-            onMouseDown={(e) =>
+            onPointerDown={(e) =>
               drag(e.currentTarget, e, (x) => {
                 const h = x * 360;
                 setHue(h);
                 commit(hsvToHex({ h, s: hsv.s, v: hsv.v }));
               })
             }
-            className="relative h-3.5 cursor-pointer rounded-[7px]"
+            className="relative h-3.5 cursor-pointer touch-none rounded-[7px]"
             style={{ background: "linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)" }}
           >
             <span

@@ -4,7 +4,7 @@ import { steps } from "@/content/how-it-works";
 export function HowItWorks() {
   return (
     <section id="how" aria-label="How it works" className="border-t border-border">
-      <div className="mx-auto max-w-7xl px-5 py-16">
+      <div className="mx-auto max-w-7xl px-5 py-12 md:py-16">
         <div className="mb-11 text-center">
           <span className="font-mono text-[11px] tracking-widest text-accent-dim">HOW IT WORKS</span>
           <h2 className="mt-3 font-heading text-[clamp(28px,3.2vw,40px)] font-semibold tracking-tight">

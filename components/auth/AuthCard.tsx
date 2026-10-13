@@ -55,7 +55,7 @@ export function AuthCard() {
   }
 
   return (
-    <div className="flex flex-col gap-5 rounded-2xl border border-border bg-surface p-7">
+    <div className="flex flex-col gap-5 rounded-2xl border border-border bg-surface p-5 sm:p-7">
       <h1 className="text-center text-[25px] font-semibold tracking-tight">Get started</h1>
 
       {status === "sent" ? (

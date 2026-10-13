@@ -1,80 +1,32 @@
-"use client";
-
-import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Tool } from "@/lib/types/tool";
-import { iconForTool } from "@/lib/tools/icon-map";
-import { categoryRank, isLive } from "@/lib/types/tool";
-import { titleCase } from "@/lib/tools/group-by-category";
-import { categoryBlurbs } from "@/content/tools-grid";
+import { ToolCard } from "@/components/studio/tools/ToolCard";
+import { isLive } from "@/lib/types/tool";
 
 export function HomeTools({ tools }: { tools: Tool[] }) {
-  const categories = useMemo(() => {
-    // Only categories that have a live tool get a tab — SOON categories are
-    // not shown on Home for now.
-    const seen: string[] = [];
-    for (const t of tools) if (isLive(t) && !seen.includes(t.category)) seen.push(t.category);
-    return seen.sort((a, b) => categoryRank(a) - categoryRank(b));
-  }, [tools]);
-
-  const [filter, setFilter] = useState("All");
-
-  const filtered = filter === "All" ? tools : tools.filter((t) => t.category === filter);
-  const live = filtered.filter(isLive).sort((a, b) => a.cardSortOrder - b.cardSortOrder);
+  const live = tools.filter(isLive).sort((a, b) => a.cardSortOrder - b.cardSortOrder);
 
   return (
-    <div className="flex flex-col gap-3 border-b border-border px-11 py-5">
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => setFilter("All")}
-          className={`border-b-2 px-3.5 py-2 text-[13px] outline-none focus-visible:ring-1 focus-visible:ring-accent ${
-            filter === "All" ? "border-accent text-text" : "border-transparent text-dim"
-          }`}
-        >
-          Live tools
-        </button>
-        {categories.map((c) => (
-          <button
-            key={c}
-            onClick={() => setFilter(c)}
-            className={`border-b-2 px-3.5 py-2 text-[13px] outline-none focus-visible:ring-1 focus-visible:ring-accent ${
-              filter === c ? "border-accent text-text" : "border-transparent text-dim"
-            }`}
-          >
-            {titleCase(c)}
-          </button>
-        ))}
-        <Link href="/studio/tools" className="ml-auto text-[13px] text-muted hover:text-accent">
+    <div className="flex flex-col gap-4 border-b border-border px-4 py-6 md:gap-3 md:px-11 md:py-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[14px] font-medium text-text md:text-[13px] md:font-normal">Live tools</h2>
+        <Link href="/studio/tools" className="text-[13px] text-muted hover:text-accent">
           See all →
         </Link>
       </div>
 
-      {filter !== "All" && categoryBlurbs[titleCase(filter)] && (
-        <p className="-mt-1 text-[12.5px] text-dim">{categoryBlurbs[titleCase(filter)]}</p>
-      )}
-
-      {tools.length === 0 && filter === "All" ? (
+      {live.length === 0 ? (
         <p className="text-center text-sm text-dim">Couldn&apos;t load live tool data right now.</p>
-      ) : live.length === 0 ? (
-        <div className="flex min-h-20 items-center justify-center border border-border text-[13.5px] text-dim">
-          This section is currently being built.
-        </div>
       ) : (
-        <div className="grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
-          {live.map((t) => {
-            const Icon = iconForTool(t);
-            return (
-              <Link
-                key={t.featureType}
-                href={`/studio/tools/${t.featureType}`}
-                className="group flex flex-col gap-1.5 bg-bg px-4 py-3.5 transition-colors hover:bg-surface focus-visible:bg-surface focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
-              >
-                <Icon size={18} className="text-text/85 transition-colors group-hover:text-accent" />
-                <span className="text-[13.5px] font-semibold transition-colors group-hover:text-accent">{t.displayName}</span>
-                <span className="text-[11.5px] leading-snug text-muted">{t.description}</span>
-              </Link>
-            );
-          })}
+        /* Phones: swipeable rail that scales to any number of tools. md+: grid. */
+        <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:grid md:grid-cols-[repeat(auto-fill,minmax(140px,160px))] md:overflow-visible md:px-0 md:pb-0">
+          {live.map((t) => (
+            <div key={t.featureType} className="w-[42vw] max-w-[190px] flex-none snap-start md:w-auto md:max-w-none">
+              <ToolCard tool={t} />
+            </div>
+          ))}
+          {/* Some mobile browsers drop the scroll container's right padding; this keeps the last card off the edge. */}
+          <div aria-hidden className="w-1 flex-none md:hidden" />
         </div>
       )}
     </div>

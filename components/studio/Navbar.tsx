@@ -44,19 +44,21 @@ export function Navbar() {
   const { title, toolBreadcrumb } = section(pathname);
 
   return (
-    <div className="flex h-[58px] flex-none items-center gap-4 border-b border-border bg-bg px-6">
+    <div className="flex h-14 flex-none items-center gap-3 border-b border-border bg-bg px-4 md:h-[58px] md:gap-4 md:px-6">
       {toolBreadcrumb && (
         <Link
           href="/studio/tools"
-          className="flex items-center gap-1.5 text-[13px] text-muted hover:text-text"
+          aria-label="Back to Tools"
+          className="-ml-1.5 flex items-center gap-1.5 p-1.5 text-[13px] text-muted hover:text-text md:ml-0 md:p-0"
         >
-          <ChevronLeft size={14} />
-          Tools
+          <ChevronLeft size={18} className="md:hidden" />
+          <ChevronLeft size={14} className="hidden md:block" />
+          <span className="hidden md:inline">Tools</span>
         </Link>
       )}
-      <span className="font-heading text-base font-semibold tracking-tight">{title}</span>
+      <span className="truncate font-heading text-base font-semibold tracking-tight">{title}</span>
 
-      <div className="ml-auto flex items-center gap-4">
+      <div className="ml-auto flex flex-none items-center gap-2.5 md:gap-4">
         <button
           onClick={() => openBuyModal()}
           className="credit-pill"
@@ -66,12 +68,13 @@ export function Navbar() {
         </button>
         <button
           onClick={() => router.push("/studio/settings")}
-          className="flex items-center gap-2 border border-border bg-surface py-1.5 pl-1.5 pr-3"
+          aria-label="Workspace settings"
+          className="flex items-center gap-2 border border-border bg-surface p-1.5 md:py-1.5 md:pl-1.5 md:pr-3"
         >
           <span className="flex h-6 w-6 flex-none items-center justify-center border border-border-strong bg-surface-2 text-[10px] font-semibold">
             {initials(label)}
           </span>
-          <span className="text-left leading-tight">
+          <span className="hidden text-left leading-tight md:block">
             <span className="block text-xs font-medium">{activeTeam?.name ?? "Team"}</span>
             <span className="block font-mono text-[9px] tracking-wide text-dim">
               {activeTeam?.role ?? ""}
