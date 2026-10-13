@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ImageIcon, Loader2, SlidersHorizontal } from "lucide-react";
 import { getCachedToolSchema, getToolSchema, generate } from "@/lib/api/generate";
 import { ApiError } from "@/lib/api/authed-fetch";
 import { useTeam } from "@/lib/studio/TeamContext";
@@ -31,6 +31,7 @@ export function ToolGenerateClient({ featureType, isLive }: { featureType: strin
   const [run, setRun] = useState<GenerateResponse | null>(null);
   // The backend allows one generation per user at a time.
   const [running, setRunning] = useState(false);
+  const [mobileView, setMobileView] = useState<"form" | "results">("form");
   // Boxes to show from the instant Generate is hit, before the server replies.
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   // Images sent here from another tool's results ("Send to…"). They're
@@ -80,6 +81,7 @@ export function ToolGenerateClient({ featureType, isLive }: { featureType: strin
     try {
       const res = await generate(formData);
       setRun(res);
+      setMobileView("results");
       // Same tick as the run itself, so Generate never flashes enabled between
       // the server answering and the results panel taking over.
       setRunning(true);
@@ -110,7 +112,7 @@ export function ToolGenerateClient({ featureType, isLive }: { featureType: strin
 
   if (!isLive) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 px-11 text-center text-dim">
+      <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-dim">
         <span className="text-3xl opacity-50">▢</span>
         <span className="text-[15px] font-semibold text-muted">This tool isn&apos;t available yet.</span>
       </div>
@@ -127,7 +129,7 @@ export function ToolGenerateClient({ featureType, isLive }: { featureType: strin
 
   if (schemaError || !schema) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 px-11 text-center text-dim">
+      <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-dim">
         <span className="text-3xl opacity-50">▢</span>
         <span className="text-[15px] font-semibold text-muted">
           {schemaError || "This tool isn't available yet."}
@@ -136,31 +138,65 @@ export function ToolGenerateClient({ featureType, isLive }: { featureType: strin
     );
   }
 
+  // Phones: the result canvas fills the top and the composer (photos, prompt,
+  // settings summary, Generate) is docked at the bottom, like the creative apps
+  // people already know. Model Shoot is a multi-step flow, so it keeps one
+  // screen at a time with a way back. Desktop shows form and results side by side.
+  const dock = schema.featureType !== "model_shoot";
+  const formWrap = dock || mobileView === "form" ? "contents" : "hidden md:contents";
+  const resultsWrap = dock
+    ? "min-h-0 flex-1 overflow-auto"
+    : mobileView === "results"
+      ? "block"
+      : "hidden md:block";
+  const hasOutput = !!run || pendingCount !== null;
+
   return (
-    <div className="flex h-full">
-      {schema.featureType === "model_shoot" ? (
-        <ModelShootFlow
-          schema={schema}
-          running={running}
-          initialGarments={incoming}
-          onSubmitting={setPendingCount}
-          onStarted={(res) => {
-            setRun(res);
-            setRunning(true);
-            // Credits are held at submission — reflect that right away.
-            refetchBilling();
-          }}
-        />
-      ) : (
-        <ToolForm
-          schema={schema}
-          onSubmit={handleSubmit}
-          submitting={submitting}
-          running={running}
-          initialImages={incoming}
-        />
-      )}
-      <div className="flex-1 overflow-auto">
+    <div className={dock ? "flex h-full flex-col-reverse md:flex-row" : "flex min-h-full flex-col md:h-full md:flex-row"}>
+      <div className={formWrap}>
+        {schema.featureType === "model_shoot" ? (
+          <ModelShootFlow
+            schema={schema}
+            running={running}
+            initialGarments={incoming}
+            onSubmitting={setPendingCount}
+            onStarted={(res) => {
+              setRun(res);
+              setMobileView("results");
+              setRunning(true);
+              // Credits are held at submission — reflect that right away.
+              refetchBilling();
+            }}
+          />
+        ) : (
+          <ToolForm
+            schema={schema}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            running={running}
+            initialImages={incoming}
+          />
+        )}
+      </div>
+      <div className={`${resultsWrap} md:flex-1 md:overflow-auto`}>
+        {!dock && (
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-bg/95 px-4 py-2.5 backdrop-blur md:hidden">
+            <button
+              onClick={() => setMobileView("form")}
+              className="flex items-center gap-1.5 rounded-full border border-border-strong px-4 py-2 text-[13px] font-medium"
+            >
+              <SlidersHorizontal size={14} /> Edit settings
+            </button>
+            <span className="text-[12.5px] text-muted">{running || submitting ? "Generating…" : "Results"}</span>
+          </div>
+        )}
+        {dock && !hasOutput && (
+          <div className="flex h-full min-h-[160px] flex-col items-center justify-center gap-2 px-8 text-center md:hidden">
+            <ImageIcon size={30} className="text-dim opacity-60" />
+            <span className="text-[15px] font-semibold text-muted">Your results appear here</span>
+            <span className="text-[12.5px] text-dim">Add a photo below and tap Generate.</span>
+          </div>
+        )}
         <GenerationResults featureType={schema.featureType} run={run} pendingCount={pendingCount} onRunningChange={setRunning} />
       </div>
     </div>

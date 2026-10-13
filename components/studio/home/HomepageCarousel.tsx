@@ -6,15 +6,16 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { HomepageSlide } from "@/lib/types/homepage-slide";
 import type { Tool } from "@/lib/types/tool";
 
-// Change CARD_W only — height (16:9, matching the artwork so nothing is
-// cropped) and the neighbour offset scale with it.
-const CARD_W = 560;
-const CARD_H = Math.round((CARD_W * 9) / 16);
-const CARD_RADIUS = 18;
+// Change MAX_CARD_W only — height (16:9, matching the artwork so nothing is
+// cropped) and the neighbour offset scale with it. On narrow screens the card
+// shrinks to a share of the container so the neighbours still peek in.
+const MAX_CARD_W = 560;
+const CARD_FILL = 0.86;
+const CARD_RADIUS = 18; // px, scaled down on small cards
 // Same motion as the design file: 0.5s, standard material ease.
 const DURATION = 500;
 const EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
-const STEP_X = Math.round(CARD_W * 0.43); // horizontal offset per slot away from centre
+const STEP_RATIO = 0.43; // horizontal offset per slot away from centre, relative to card width
 const DRAG_START_PX = 5; // below this a press is still a click
 const DRAG_COMMIT_PX = 70; // release past this distance and the carousel moves on
 const FLICK_VELOCITY = 0.45; // px/ms — a quick flick commits even over a short distance
@@ -38,6 +39,7 @@ export function HomepageCarousel({ slides, tools }: { slides: HomepageSlide[]; t
   const toolNames = new Map(tools.map((t) => [t.featureType, t.displayName]));
   const [index, setIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const [containerW, setContainerW] = useState(0);
   const wheelLock = useRef(false);
   const wheelAccum = useRef(0);
   const wheelIdle = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -59,6 +61,17 @@ export function HomepageCarousel({ slides, tools }: { slides: HomepageSlide[]; t
   }
 
   const step = (delta: number) => setIndex((i) => (i + delta + n) % n);
+
+  // Card size follows the container so the carousel fits phones as well.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const measure = () => setContainerW(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [n]);
 
   // Trackpad horizontal swipe. Needs a native non-passive listener so
   // preventDefault can stop the browser's back/forward swipe navigation. The
@@ -99,6 +112,12 @@ export function HomepageCarousel({ slides, tools }: { slides: HomepageSlide[]; t
   // Valid, expected state — no slides currently scheduled/active. Hide the
   // section entirely rather than rendering a broken empty slider.
   if (n === 0) return null;
+
+  const CARD_W = containerW ? Math.min(MAX_CARD_W, Math.round(containerW * CARD_FILL)) : MAX_CARD_W;
+  const CARD_H = Math.round((CARD_W * 9) / 16);
+  const STEP_X = Math.round(CARD_W * STEP_RATIO);
+  const compact = CARD_W < 400;
+  const radius = compact ? 14 : CARD_RADIUS;
 
   // Pointer drag (mouse, touch and pen): the cards track the pointer, and on
   // release either commit to the next/previous slide or spring back.
@@ -151,7 +170,7 @@ export function HomepageCarousel({ slides, tools }: { slides: HomepageSlide[]; t
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
       style={{ touchAction: "pan-y", cursor: dragging ? "grabbing" : undefined }}
-      className="relative select-none overflow-hidden pb-3 pt-5"
+      className="relative select-none overflow-hidden pb-3 pt-4 md:pt-5"
     >
       <div className="relative" style={{ height: CARD_H, perspective: 1400 }}>
         {sorted.map((slide, idx) => {
@@ -176,13 +195,13 @@ export function HomepageCarousel({ slides, tools }: { slides: HomepageSlide[]; t
           const card = (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element -- backend-supplied CDN URL, not on next.config's allowed image hosts */}
-              <img src={slide.imageUrl} alt={slide.title} draggable={false} className="h-full w-full object-cover" style={{ borderRadius: CARD_RADIUS }} />
+              <img src={slide.imageUrl} alt={slide.title} draggable={false} className="h-full w-full object-cover" style={{ borderRadius: radius }} />
               <div
                 className="pointer-events-none absolute inset-0 transition-[background] duration-500 ease-in-out"
-                style={{ borderRadius: CARD_RADIUS, background: `rgba(6,8,5,${current ? 0 : 0.45})` }}
+                style={{ borderRadius: radius, background: `rgba(6,8,5,${current ? 0 : 0.45})` }}
               />
               {current && href && (
-                <div className="absolute bottom-4 left-4 rounded-full bg-accent px-[18px] py-2 text-[13px] font-semibold text-accent-ink shadow-[0_4px_14px_rgba(0,0,0,0.45)] hover:bg-accent-hover">
+                <div className="absolute bottom-3 left-3 rounded-full bg-accent px-3.5 py-1.5 text-[12px] md:bottom-4 md:left-4 md:px-[18px] md:py-2 md:text-[13px] font-semibold text-accent-ink shadow-[0_4px_14px_rgba(0,0,0,0.45)] hover:bg-accent-hover">
                   {ctaText}
                 </div>
               )}
@@ -193,7 +212,7 @@ export function HomepageCarousel({ slides, tools }: { slides: HomepageSlide[]; t
             width: CARD_W,
             height: CARD_H,
             marginLeft: -CARD_W / 2,
-            borderRadius: CARD_RADIUS,
+            borderRadius: radius,
             overflow: "hidden",
             zIndex: 5 - Math.abs(off),
             opacity: visible ? 1 : 0,
@@ -249,7 +268,7 @@ export function HomepageCarousel({ slides, tools }: { slides: HomepageSlide[]; t
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={() => step(dir)}
                   aria-label={dir === -1 ? "Previous slide" : "Next slide"}
-                  className={`absolute top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white shadow-[0_4px_14px_rgba(0,0,0,0.5)] backdrop-blur transition-colors hover:border-accent hover:bg-accent hover:text-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                  className={`absolute top-1/2 z-10 hidden h-10 w-10 md:flex -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white shadow-[0_4px_14px_rgba(0,0,0,0.5)] backdrop-blur transition-colors hover:border-accent hover:bg-accent hover:text-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                     dir === -1 ? "left-[34px]" : "right-[34px]"
                   }`}
                 >

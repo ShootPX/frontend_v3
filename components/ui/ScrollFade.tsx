@@ -10,12 +10,15 @@ export function ScrollFade({
   children,
   className = "",
   contentClassName = "",
+  scrollClassName = "",
 }: {
   children: ReactNode;
   /** Sizing of the outer box, e.g. "flex-1". */
   className?: string;
   /** Padding etc. for the scrolling content. */
   contentClassName?: string;
+  /** Extra classes for the scrolling element itself, e.g. a max height. */
+  scrollClassName?: string;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -40,7 +43,7 @@ export function ScrollFade({
 
   return (
     <div className={`relative min-h-0 ${className}`}>
-      <div ref={scrollRef} className="scroll-slim h-full overflow-y-auto overflow-x-hidden">
+      <div ref={scrollRef} className={`scroll-slim h-full overflow-y-auto overflow-x-hidden ${scrollClassName}`}>
         <div ref={contentRef} className={contentClassName}>
           {children}
         </div>

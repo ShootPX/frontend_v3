@@ -114,9 +114,9 @@ export function RecentWork() {
   const loading = teamsLoading || itemsLoading || (!userId && !!firebaseUser);
 
   return (
-    <div className="flex flex-col gap-2.5 px-11 py-7">
+    <div className="flex flex-col gap-4 px-4 py-6 md:gap-2.5 md:px-11 md:py-7">
       <div className="flex items-baseline justify-between">
-        <span className="font-mono text-[11px] tracking-widest text-dim">RECENT WORK</span>
+        <span className="font-mono text-[11px] uppercase tracking-widest text-dim">Recent work</span>
         <Link href="/studio/library" className="text-[13px] text-muted hover:text-accent">
           View all →
         </Link>
@@ -136,7 +136,8 @@ export function RecentWork() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+        /* Phones: one swipeable row of thumbnails; tap to open. md+: grid. */
+        <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-4 md:gap-3 lg:grid-cols-8">
           {items.map((g) => {
             const ready = g.status === "completed" && !!g.outputUrl;
             const open = () => ready && setDetailId(g.jobId);
@@ -152,7 +153,7 @@ export function RecentWork() {
                   e.preventDefault();
                   open();
                 }}
-                className={`group relative aspect-square overflow-hidden border border-border bg-surface outline-none transition-colors focus-visible:border-accent ${
+                className={`group relative aspect-square w-[34vw] max-w-[170px] flex-none snap-start overflow-hidden border md:w-auto md:max-w-none border-border bg-surface outline-none transition-colors focus-visible:border-accent ${
                   ready ? "cursor-pointer hover:border-border-strong" : ""
                 }`}
               >
@@ -171,7 +172,7 @@ export function RecentWork() {
                 )}
 
                 {ready && (
-                  <div className="absolute right-1.5 top-1.5 flex gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+                  <div className="absolute right-1.5 top-1.5 flex gap-1 max-md:hidden opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
                     {[
                       { label: "Open", Icon: ExternalLink, run: open },
                       { label: "Download", Icon: Download, run: () => saveOne(g) },
@@ -201,6 +202,7 @@ export function RecentWork() {
               </div>
             );
           })}
+          <div aria-hidden className="w-1 flex-none md:hidden" />
         </div>
       )}
 

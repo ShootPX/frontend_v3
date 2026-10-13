@@ -76,7 +76,7 @@ export function DetailPanel({ item, toolLabel, memberName, onClose, onStep, canS
   return (
     <>
       <div className="fixed inset-0 z-[55] bg-black/55" onClick={onClose} />
-      <aside className="fixed right-0 top-0 z-[56] flex h-screen w-[380px] max-w-full flex-col overflow-hidden border-l border-border-strong bg-bg">
+      <aside className="fixed right-0 top-0 z-[56] flex h-dvh w-[380px] max-w-full flex-col overflow-hidden border-l border-border-strong bg-bg">
         <div className="flex flex-none items-center justify-between border-b border-border px-5 py-4">
           <button onClick={onClose} aria-label="Close" className="text-dim hover:text-text">
             <X size={18} />

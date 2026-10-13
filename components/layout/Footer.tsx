@@ -22,9 +22,9 @@ export function Footer() {
   const resources = resourceLinks();
   return (
     <footer className="border-t border-border bg-bg-alt">
-      <div className="mx-auto max-w-7xl px-5 pb-6 pt-14">
-        <div className="grid grid-cols-1 gap-8 pb-11 sm:grid-cols-2 lg:grid-cols-[1.6fr_repeat(5,1fr)]">
-          <div className="flex flex-col gap-4">
+      <div className="mx-auto max-w-7xl px-5 pb-6 pt-10 md:pt-14">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8 pb-9 md:pb-11 lg:gap-x-8 lg:grid-cols-[1.6fr_repeat(5,1fr)]">
+          <div className="col-span-2 flex flex-col gap-4 lg:col-span-1">
             <Link href="/#top">
               <Logo size={26} textClassName="text-[17px]" />
             </Link>

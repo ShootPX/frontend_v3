@@ -3,7 +3,7 @@ import { pillars } from "@/content/platform";
 
 export function Platform() {
   return (
-    <section id="platform" aria-label="Platform" className="mx-auto max-w-7xl px-5 py-16">
+    <section id="platform" aria-label="Platform" className="mx-auto max-w-7xl px-5 py-12 md:py-16">
       <div className="mb-11 max-w-[62ch]">
         <span className="font-mono text-[11px] tracking-widest text-accent-dim">THE PLATFORM</span>
         <h2 className="mt-3 font-heading text-[clamp(30px,3.6vw,46px)] font-semibold leading-tight tracking-tight">
@@ -26,7 +26,7 @@ export function Platform() {
                 <SlotImage src={p.image} alt={p.alt} placeholder={p.placeholder} sizes="(min-width: 768px) 50vw, 100vw" />
               </div>
             )}
-            <div className="flex flex-1 flex-col justify-center gap-4 px-8 py-9">
+            <div className="flex flex-1 flex-col justify-center gap-4 px-5 py-7 md:px-8 md:py-9">
               <span className="font-mono text-[10.5px] tracking-widest text-accent-dim">{p.tag}</span>
               <h3 className="font-heading text-2xl font-semibold leading-snug tracking-tight">
                 {p.title}

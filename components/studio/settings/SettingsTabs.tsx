@@ -19,13 +19,13 @@ export function SettingsTabs() {
   const [tab, setTab] = useState<TabId>("account");
 
   return (
-    <div className="max-w-3xl px-11 py-8">
-      <div className="mb-7 flex gap-[22px] border-b border-border">
+    <div className="max-w-3xl px-4 py-5 md:px-11 md:py-8">
+      <div className="mb-5 flex justify-between gap-2 overflow-x-auto border-b border-border md:mb-7 md:justify-start md:gap-[22px]">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`border-b-2 pb-3 text-[13.5px] ${
+            className={`flex-1 border-b-2 pb-3 pt-1 text-center text-[14px] md:flex-none md:text-[13.5px] ${
               tab === t.id ? "border-accent text-white" : "border-transparent text-dim"
             }`}
           >

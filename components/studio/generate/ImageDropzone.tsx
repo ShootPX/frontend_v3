@@ -77,13 +77,14 @@ export function ImageDropzone({
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`flex min-h-[140px] cursor-pointer flex-col items-center justify-center gap-2.5 border-[1.5px] border-dashed px-4 py-8 ${
+        className={`flex min-h-[140px] cursor-pointer flex-col items-center justify-center gap-2.5 border-[1.5px] border-dashed px-4 py-8 max-md:min-h-0 max-md:flex-row max-md:gap-3 max-md:rounded-2xl max-md:py-3.5 ${
           dragging ? "border-accent bg-accent/5" : "border-border-strong hover:border-accent"
         }`}
       >
         <Upload size={22} className="text-dim" />
         <span className="text-[13.5px] text-muted">
-          {label} <span className="text-accent">select an image</span>
+          <span className="max-md:hidden">{label} </span>
+          <span className="text-accent">{files.length > 0 ? "Add more images" : "Add images"}</span>
         </span>
         <input
           ref={inputRef}
@@ -98,9 +99,9 @@ export function ImageDropzone({
       {error && <span className="text-xs text-[#ff8a6b]">{error}</span>}
 
       {files.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 max-md:overflow-x-auto md:flex-wrap">
           {files.map((f, i) => (
-            <div key={`${f.name}-${i}`} className="group relative h-[72px] w-[72px] flex-none overflow-hidden border border-border">
+            <div key={`${f.name}-${i}`} className="group relative h-[64px] w-[64px] flex-none overflow-hidden border border-border max-md:rounded-xl md:h-[72px] md:w-[72px]">
               {/* eslint-disable-next-line @next/next/no-img-element -- transient local blob preview, not worth next/image's overhead */}
               <img src={previewUrls[i]} alt={f.name} className="h-full w-full object-cover" />
               <button
@@ -115,7 +116,7 @@ export function ImageDropzone({
         </div>
       )}
 
-      {hint && <span className="text-[11px] text-dim">{hint}</span>}
+      {hint && <span className="text-[11px] text-dim max-md:hidden">{hint}</span>}
     </div>
   );
 }
