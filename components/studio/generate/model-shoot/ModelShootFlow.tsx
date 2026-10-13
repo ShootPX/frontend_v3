@@ -149,8 +149,8 @@ export function ModelShootFlow({
           : null;
 
   return (
-    <div className="flex h-full w-[380px] flex-none flex-col border-r border-border">
-      <ScrollFade className="flex-1" contentClassName="flex flex-col gap-[22px] px-6 py-6">
+    <div className="flex w-full flex-none flex-col border-b border-border md:h-full md:w-[380px] md:border-b-0 md:border-r">
+      <ScrollFade className="flex-1" contentClassName="flex flex-col gap-[22px] px-4 py-5 md:px-6 md:py-6">
         <div className="flex items-stretch border border-border">
           {STEPS.map((label, i) => {
             const n = i + 1;
@@ -192,7 +192,7 @@ export function ModelShootFlow({
           />}
       </ScrollFade>
 
-      <div className="flex flex-none flex-col gap-2 border-t border-border px-6 py-4">
+      <div className="sticky bottom-0 z-10 flex flex-none flex-col gap-2 border-t border-border bg-bg px-4 py-3 md:static md:px-6 md:py-4">
         {error && (
           <p className="text-[13px] text-[#ff8a6b]">
             {error.message}{" "}

@@ -14,7 +14,7 @@ export function Pricing({ billing }: { billing: BillingResponse }) {
 
   return (
     <section id="pricing" aria-label="Pricing" className="border-t border-border bg-bg-alt">
-      <div className="mx-auto max-w-7xl px-5 py-16">
+      <div className="mx-auto max-w-7xl px-5 py-12 md:py-16">
         <div className="mx-auto mb-10 max-w-[54ch] text-center">
           <span className="font-mono text-[11px] tracking-widest text-accent-dim">PRICING</span>
           <h2 className="mt-3 font-heading text-[clamp(28px,3.2vw,40px)] font-semibold tracking-tight">

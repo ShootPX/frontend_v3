@@ -34,7 +34,7 @@ export function CtaSignup() {
   return (
     <section id="start" aria-label="Get started" className="relative overflow-hidden border-t border-border">
       <div className="pointer-events-none absolute bottom-[-260px] left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(200,255,0,0.15),transparent)]" />
-      <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 py-20 text-center">
+      <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 py-14 text-center md:py-20">
         <h2 className="max-w-[20ch] font-heading text-[clamp(32px,4.4vw,56px)] font-bold leading-[1.03] tracking-tight">
           Your next shoot starts with one photo.
         </h2>
@@ -51,7 +51,7 @@ export function CtaSignup() {
             YOU&apos;RE ON THE LIST
           </div>
         ) : (
-          <div className="flex w-full max-w-[440px] items-center gap-2 rounded-full border border-border-strong bg-surface p-1.5 pl-5">
+          <div className="flex w-full max-w-[440px] items-center gap-2 rounded-full border border-border-strong bg-surface p-1.5 pl-4 sm:pl-5">
             <input
               type="email"
               autoComplete="email"
@@ -65,7 +65,7 @@ export function CtaSignup() {
             <button
               onClick={signUp}
               disabled={sending}
-              className="whitespace-nowrap rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-ink hover:bg-accent-hover disabled:opacity-60"
+              className="whitespace-nowrap rounded-full bg-accent px-4 py-3 sm:px-6 text-sm font-semibold text-accent-ink hover:bg-accent-hover disabled:opacity-60"
             >
               {sending ? "Sending…" : "Join the list"}
             </button>
