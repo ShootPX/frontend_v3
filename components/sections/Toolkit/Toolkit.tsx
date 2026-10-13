@@ -1,5 +1,6 @@
 import type { Tool } from "@/lib/types/tool";
 import { iconForTool } from "@/lib/tools/icon-map";
+import { ToolThumb } from "@/components/studio/tools/ToolThumb";
 import { groupToolsByCategory, titleCase } from "@/lib/tools/group-by-category";
 
 export function Toolkit({ tools }: { tools: Tool[] }) {
@@ -7,7 +8,7 @@ export function Toolkit({ tools }: { tools: Tool[] }) {
 
   return (
     <section id="tools" aria-label="All tools" className="border-t border-border bg-bg-alt">
-      <div className="mx-auto max-w-7xl px-5 py-16">
+      <div className="mx-auto max-w-7xl px-5 py-12 md:py-16">
         <div className="mx-auto mb-10 max-w-[58ch] text-center">
           <span className="font-mono text-[11px] tracking-widest text-accent-dim">TOOLKIT</span>
           <h2 className="mt-3 font-heading text-[clamp(28px,3.2vw,40px)] font-semibold tracking-tight">
@@ -37,8 +38,13 @@ export function Toolkit({ tools }: { tools: Tool[] }) {
                     return (
                       <div
                         key={t.featureType}
-                        className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-accent-dim"
+                        className="group flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-accent-dim"
                       >
+                        {!soon && (
+                          <div className="relative -mx-4 -mt-4 mb-1 aspect-[4/3] overflow-hidden rounded-t-xl">
+                            <ToolThumb tool={t} sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw" />
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <span className="flex h-7 w-7 flex-none items-center justify-center rounded-md bg-accent/15">
                             <Icon size={15} className="text-accent" />

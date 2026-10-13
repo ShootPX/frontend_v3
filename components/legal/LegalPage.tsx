@@ -6,7 +6,7 @@ export function LegalPage({ title, sections }: { title: string; sections: LegalS
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-3xl px-5 pb-24 pt-32">
+      <main className="mx-auto max-w-3xl px-4 pb-20 pt-28 sm:px-5 sm:pb-24 sm:pt-32">
         <span className="font-mono text-[11px] tracking-widest text-accent-dim">LEGAL</span>
         <h1 className="mt-3 font-heading text-[clamp(32px,4vw,44px)] font-bold tracking-tight">{title}</h1>
         <p className="mt-2 text-[13px] text-dim">Last updated {LEGAL_LAST_UPDATED}</p>

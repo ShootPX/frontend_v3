@@ -25,7 +25,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata = siteMetadata;
-export const viewport: Viewport = { themeColor: "#000000" };
+export const viewport: Viewport = { themeColor: "#000000", viewportFit: "cover" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

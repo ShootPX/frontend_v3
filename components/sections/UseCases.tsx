@@ -4,7 +4,7 @@ import { audiences } from "@/content/use-cases";
 export function UseCases() {
   return (
     <section id="usecases" aria-label="Use cases" className="border-t border-border bg-bg-alt">
-      <div className="mx-auto max-w-7xl px-5 py-16">
+      <div className="mx-auto max-w-7xl px-5 py-12 md:py-16">
         <div className="mb-10 max-w-[58ch]">
           <span className="font-mono text-[11px] tracking-widest text-accent-dim">WHO IT&apos;S FOR</span>
           <h2 className="mt-3 font-heading text-[clamp(28px,3.2vw,40px)] font-semibold tracking-tight">
@@ -15,7 +15,7 @@ export function UseCases() {
           {audiences.map((a) => (
             <div
               key={a.title}
-              className="flex flex-col gap-3.5 rounded-2xl border border-border bg-surface p-7"
+              className="flex flex-col gap-3.5 rounded-2xl border border-border bg-surface p-5 md:p-7"
             >
               <h3 className="text-lg font-semibold tracking-tight">{a.title}</h3>
               <p className="text-[13.5px] leading-relaxed text-muted">{a.desc}</p>

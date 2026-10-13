@@ -17,10 +17,10 @@ export default function AuthPage() {
   }, [loading, profile, router]);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-dvh">
       <AuthShowcase />
 
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden px-8 py-10 lg:w-[520px] lg:flex-none">
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden px-5 py-10 sm:px-8 lg:w-[520px] lg:flex-none">
         <div className="animate-glow pointer-events-none absolute -right-40 -top-36 h-[420px] w-[520px] rounded-full bg-[radial-gradient(closest-side,rgba(200,255,0,0.14),transparent)]" />
 
         <div className="relative flex w-full max-w-sm flex-col gap-6">

@@ -233,7 +233,7 @@ export function GenerationResults({
   // ---- A generation opened from a folder card ------------------------------
   if (opened) {
     return (
-      <div className="flex flex-col gap-4 p-6">
+      <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center gap-3.5">
           <button onClick={() => setOpenBatchId(null)} className="text-[13px] text-dim hover:text-text">
             ← Back
@@ -270,7 +270,7 @@ export function GenerationResults({
   const slots = runPending ? Math.max(run!.grantedCount, 1) : Math.max(pendingCount ?? 0, 1);
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-5 p-4 md:gap-6 md:p-6">
       {active && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {Array.from({ length: slots }, (_, i) => {

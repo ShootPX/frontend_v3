@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronUp, SlidersHorizontal, X } from "lucide-react";
 import { ImageDropzone } from "./ImageDropzone";
 import { ParamFieldInput } from "./ParamFieldInput";
 import { OutputCountField } from "./OutputCountField";
@@ -8,7 +9,7 @@ import { EnhancePromptButton } from "./EnhancePromptButton";
 import { ScrollFade } from "@/components/ui/ScrollFade";
 import { CreditCostBadge } from "./CreditCostBadge";
 import type { ToolSchema } from "@/lib/types/generate";
-import { optionValue } from "@/lib/types/generate";
+import { optionLabel, optionValue } from "@/lib/types/generate";
 import { estimateCreditsPerImage, hasNoCostVaryingFields } from "@/lib/tools/credit-estimate";
 
 const BRAND_COLOR = "#C8FF00"; // --color-accent
@@ -73,6 +74,8 @@ export function ToolForm({
     outputCountField?.default != null ? Number(outputCountField.default) : 1,
   );
   const [error, setError] = useState("");
+  // Phones: selects/counts live in a bottom sheet behind one summary bar.
+  const [sheetOpen, setSheetOpen] = useState(false);
   // The backend allows one active job per user; an enhance counts as one.
   const [enhancing, setEnhancing] = useState(false);
   const uploadTitle = schema.featureType === "recolor" ? "Upload your design" : "Upload product photos";
@@ -82,6 +85,23 @@ export function ToolForm({
   const fixedCost = hasNoCostVaryingFields(schema.featureType, schema);
   const needsImages = schema.maxInputImages > 0;
   const missingImage = needsImages && images.length === 0;
+
+  // Phones keep only the photos and the prompt on the page; every other option
+  // (idea, colour, size, quality, count) collapses into the summary bar + sheet.
+  const sheetFields = [...leadFields, ...settingsFields];
+  const hasSheet = sheetFields.length > 0 || !!outputCountField;
+  const summary = [
+    outputCountField ? `${outputCount} ${outputCount === 1 ? "result" : "results"}` : null,
+    ...sheetFields.map((f) => {
+      const v = values[f.name];
+      if (!v) return null;
+      const opt = f.options?.find((o) => optionValue(o) === v);
+      const text = opt ? optionLabel(opt) : v;
+      return /^\d+k$/i.test(text.trim()) ? text.trim().toUpperCase() : text;
+    }),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   function setValue(name: string, v: string) {
     setValues((prev) => ({ ...prev, [name]: v }));
@@ -111,10 +131,13 @@ export function ToolForm({
     for (const [key, val] of Object.entries(values)) {
       if (val) fd.append(key, val);
     }
-    fd.append("output_count", String(Math.min(outputCount, outputMax)));
-    const count = Math.min(outputCount, outputMax);
-    // No output_count field means one result per uploaded image.
-    onSubmit(fd, outputCountField ? count : Math.max(images.length, 1));
+    // No output_count field (e.g. recolor) means one result per uploaded image, so
+    // send that number rather than the stepper default of 1.
+    const count = outputCountField
+      ? Math.min(outputCount, outputMax)
+      : Math.max(images.length, 1);
+    fd.append("output_count", String(count));
+    onSubmit(fd, count);
   }
 
   const renderField = (field: (typeof otherFields)[number]) => (
@@ -138,12 +161,16 @@ export function ToolForm({
   );
 
   return (
-    <div className="flex h-full w-[380px] flex-none flex-col border-r border-border">
-      <ScrollFade className="flex-1" contentClassName="px-[26px] pb-5 pt-[26px]">
+    <div className="flex w-full flex-none flex-col border-t border-border bg-bg md:h-full md:w-[380px] md:border-r md:border-t-0">
+      <ScrollFade
+        className="flex-1"
+        scrollClassName="max-md:h-auto max-md:max-h-[34dvh]"
+        contentClassName="px-4 pb-2 pt-3 md:px-[26px] md:pb-5 md:pt-[26px]"
+      >
         {needsImages && (
-          <div className="mb-6 mt-0">
-            <h2 className="font-heading text-[19px] font-semibold tracking-tight">{uploadTitle}</h2>
-            <div className="mt-3">
+          <div className="mb-3 mt-0 md:mb-6">
+            <h2 className="font-heading text-[19px] font-semibold tracking-tight max-md:hidden">{uploadTitle}</h2>
+            <div className="md:mt-3">
               <ImageDropzone
                 files={images}
                 onChange={setImages}
@@ -154,10 +181,10 @@ export function ToolForm({
           </div>
         )}
 
-        {leadFields.length > 0 && <div className="mb-6 flex flex-col gap-2.5">{leadFields.map(renderField)}</div>}
+        {leadFields.length > 0 && <div className="mb-6 hidden flex-col gap-2.5 md:flex">{leadFields.map(renderField)}</div>}
 
         {(outputCountField || settingsFields.length > 0) && (
-          <div className="mb-6 flex flex-col gap-2.5">
+          <div className="mb-6 hidden flex-col gap-2.5 md:flex">
             <span className="text-[13px] font-medium text-muted">Settings</span>
             {outputCountField && (
               <OutputCountField value={outputCount} onChange={setOutputCount} max={outputMax} />
@@ -169,18 +196,60 @@ export function ToolForm({
         {promptFields.length > 0 && <div className="flex flex-col gap-2.5">{promptFields.map(renderField)}</div>}
       </ScrollFade>
 
-      <div className="flex-none border-t border-border px-[26px] py-4 flex flex-col gap-2">
+      <div className="z-10 flex flex-none flex-col gap-2 border-t border-border bg-bg px-4 pb-3 pt-2.5 md:static md:px-[26px] md:py-4">
         {error && <p className="text-sm text-[#ff8a6b]">{error}</p>}
+        {hasSheet && (
+          <button
+            onClick={() => setSheetOpen(true)}
+            className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-2.5 text-left md:hidden"
+          >
+            <span className="flex min-w-0 items-center gap-2 text-[13.5px] font-medium">
+              <SlidersHorizontal size={15} className="flex-none text-muted" />
+              <span className="truncate">{summary || "Settings"}</span>
+            </span>
+            <ChevronUp size={16} className="flex-none text-muted" />
+          </button>
+        )}
         <button
           onClick={handleSubmit}
           disabled={submitting || running || enhancing || missingImage}
-          className="rounded-full bg-accent py-3 text-sm font-semibold text-accent-ink hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-accent"
+          className="rounded-full bg-accent py-3.5 text-[15px] font-semibold md:py-3 md:text-sm text-accent-ink hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-accent"
         >
           {submitting ? "Starting…" : running ? "Generating…" : enhancing ? "Enhancing prompt…" : "Generate"}
         </button>
         {missingImage && <p className="text-center text-[12px] text-dim">Upload a photo to start</p>}
-        <CreditCostBadge perImage={perImageCost} count={outputCount} fixedCost={fixedCost} />
+        <CreditCostBadge perImage={perImageCost} count={outputCountField ? outputCount : Math.max(images.length, 1)} fixedCost={fixedCost} />
       </div>
+
+      {sheetOpen && (
+        <div className="fixed inset-0 z-[70] flex flex-col justify-end md:hidden">
+          <button aria-label="Close settings" onClick={() => setSheetOpen(false)} className="absolute inset-0 bg-black/60" />
+          <div className="relative flex max-h-[80vh] flex-col rounded-t-3xl border-t border-border-strong bg-bg">
+            <div className="flex flex-none items-center justify-between px-5 pb-2 pt-4">
+              <span className="font-heading text-[17px] font-semibold">Settings</span>
+              <button
+                onClick={() => setSheetOpen(false)}
+                aria-label="Close"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-surface"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 pb-4 pt-2">
+              {outputCountField && <OutputCountField value={outputCount} onChange={setOutputCount} max={outputMax} />}
+              {sheetFields.map(renderField)}
+            </div>
+            <div className="flex-none px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2">
+              <button
+                onClick={() => setSheetOpen(false)}
+                className="h-12 w-full rounded-full bg-accent text-[15px] font-semibold text-accent-ink"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

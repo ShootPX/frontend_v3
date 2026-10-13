@@ -5,6 +5,7 @@ export type Tool = {
   displayName: string;
   description: string | null;
   icon: string | null;
+  thumbUrl?: string | null; // card image from the API; null/missing falls back to an icon tile
   category: string; // lowercase: shoot | finish | video | scale
   cardSortOrder: number;
   isComingSoon: boolean; // editorial badge only — gate on status

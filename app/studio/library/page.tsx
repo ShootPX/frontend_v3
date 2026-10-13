@@ -286,7 +286,7 @@ export default function StudioLibrary() {
     );
 
   return (
-    <div className="flex flex-col gap-6 px-10 py-7">
+    <div className="flex flex-col gap-5 px-4 py-5 md:gap-6 md:px-10 md:py-7">
       <div className="flex flex-wrap items-center gap-2.5">
         <Dropdown
           ariaLabel="Filter by tool"
