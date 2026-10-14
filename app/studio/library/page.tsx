@@ -398,7 +398,7 @@ export default function StudioLibrary() {
       {loading && items.length === 0 ? (
         <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5" aria-busy="true" aria-label="Loading">
           {Array.from({ length: 10 }, (_, i) => (
-            <div key={i} className="aspect-square animate-pulse border border-border bg-surface" />
+            <div key={i} className="aspect-square animate-pulse rounded-xl border border-border bg-surface" />
           ))}
         </div>
       ) : items.length === 0 ? (
@@ -424,7 +424,7 @@ export default function StudioLibrary() {
                   key={g.jobId}
                   onClick={() => onItemClick(g)}
                   aria-current={g.jobId === detailId ? "true" : undefined}
-                  className={`group relative aspect-square overflow-hidden border bg-surface text-left outline-none transition-colors focus-visible:border-accent ${
+                  className={`group relative aspect-square transform-gpu overflow-hidden rounded-xl border bg-surface text-left outline-none transition-colors focus-visible:border-accent ${
                     selected.has(g.jobId) || g.jobId === detailId
                       ? "border-accent"
                       : "border-border hover:border-border-strong"

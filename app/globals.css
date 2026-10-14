@@ -76,6 +76,43 @@
   animation: drop 0.16s ease both;
 }
 
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes label-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-modal-in {
+  animation: modal-in 0.2s ease-out both;
+}
+
+.animate-label-in {
+  animation: label-in 0.18s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-modal-in,
+  .animate-label-in {
+    animation: none;
+  }
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -202,7 +239,13 @@ textarea:-webkit-autofill {
 /* Slim, dark scrollbar with no arrow buttons — for inner scroll areas. */
 .scroll-slim {
   scrollbar-width: thin;
-  scrollbar-color: #2c332e transparent;
+  /* Hidden until the area is hovered or focused, so a long thumb never reads
+     as a progress bar sitting next to the panel. */
+  scrollbar-color: transparent transparent;
+}
+.scroll-slim:hover,
+.scroll-slim:focus-within {
+  scrollbar-color: #3b433d transparent;
 }
 .scroll-slim::-webkit-scrollbar {
   width: 8px;
@@ -212,12 +255,17 @@ textarea:-webkit-autofill {
   background: transparent;
 }
 .scroll-slim::-webkit-scrollbar-thumb {
-  background: #2c332e;
+  background: transparent;
   border-radius: 8px;
-  border: 0;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.scroll-slim:hover::-webkit-scrollbar-thumb,
+.scroll-slim:focus-within::-webkit-scrollbar-thumb {
+  background-color: #3b433d;
 }
 .scroll-slim::-webkit-scrollbar-thumb:hover {
-  background: #3b433d;
+  background-color: #4a534c;
 }
 .scroll-slim::-webkit-scrollbar-button {
   display: none;
