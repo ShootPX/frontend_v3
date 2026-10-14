@@ -186,7 +186,7 @@ export function GenerationResults({
     b.images.forEach((url, i) => setTimeout(() => saveOne(url, filename(b, i)), i * 250));
   }
 
-  if (!active && finished.length === 0) return <EmptyResults />;
+  if (!active && finished.length === 0) return <EmptyResults featureType={featureType} />;
 
   const opened = finished.find((b) => b.batchId === openBatchId) ?? null;
   const imageGrid = (b: Finished) => (
@@ -195,7 +195,7 @@ export function GenerationResults({
         <button
           key={url + i}
           onClick={() => setViewing(url)}
-          className="relative aspect-square cursor-pointer overflow-hidden border border-border bg-surface"
+          className="relative aspect-square cursor-pointer overflow-hidden rounded-xl border border-border bg-surface"
         >
           <Image src={url} alt="" fill sizes="(min-width: 640px) 20vw, 45vw" className="object-cover" />
         </button>
@@ -280,7 +280,7 @@ export function GenerationResults({
                 <button
                   key={i}
                   onClick={() => setViewing(job.outputUrl as string)}
-                  className="relative aspect-square cursor-pointer overflow-hidden border border-border bg-surface"
+                  className="relative aspect-square cursor-pointer overflow-hidden rounded-xl border border-border bg-surface"
                 >
                   <Image src={job.outputUrl} alt="" fill sizes="20vw" className="object-cover" />
                 </button>
@@ -290,7 +290,7 @@ export function GenerationResults({
               return (
                 <div
                   key={i}
-                  className="flex aspect-square items-center justify-center border border-border bg-surface p-3 text-center text-xs text-dim"
+                  className="flex aspect-square items-center justify-center rounded-xl border border-border bg-surface p-3 text-center text-xs text-dim"
                 >
                   {job.errorMessage || "Generation failed"}
                 </div>
@@ -300,7 +300,7 @@ export function GenerationResults({
               return (
                 <div
                   key={i}
-                  className="flex aspect-square flex-col items-center justify-center gap-2 border border-border bg-surface p-3 text-center"
+                  className="flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border border-border bg-surface p-3 text-center"
                 >
                   <span className="text-[12px] font-medium text-text">Taking longer than expected</span>
                   <span className="text-[11px] text-dim">This one has not finished yet.</span>
@@ -310,7 +310,7 @@ export function GenerationResults({
             return (
               <div
                 key={i}
-                className="flex aspect-square flex-col items-center justify-center gap-2 border border-border bg-surface p-3 text-center"
+                className="flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border border-border bg-surface p-3 text-center"
               >
                 <LottieIcon animation={loading} size={48} />
                 <span className="text-[12px] text-muted">{STATUS_MESSAGES[messageIndex]}</span>

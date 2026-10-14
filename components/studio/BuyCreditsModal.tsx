@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Check, Lock } from "lucide-react";
+import { X, Check, Lock, Loader2 } from "lucide-react";
 import { CreditIcon } from "@/components/ui/CreditIcon";
 import { getBilling } from "@/lib/api/billing";
 import { apiErrorDetail } from "@/lib/api/authed-fetch";
-import { checkoutCreditPack, checkoutSubscription, switchSubscription } from "@/lib/api/checkout";
+import { cancelPendingSwitch, checkoutCreditPack, checkoutSubscription, switchSubscription } from "@/lib/api/checkout";
 import { loadRazorpayCheckout, openRazorpayCheckout } from "@/lib/razorpay/checkout";
 import type { BillingPlan, BillingResponse } from "@/lib/types/billing";
 import { useTeam } from "@/lib/studio/TeamContext";
@@ -220,7 +220,19 @@ export function BuyCreditsModal() {
           modal: {
             ondismiss: () => {
               say("Checkout cancelled");
-              if (isSwitch) refetch(); // the unpaid upgrade stays pending until it expires
+              if (!isSwitch) return;
+              // Release the unpaid upgrade so the card goes back to "Upgrade".
+              cancelPendingSwitch(activeTeamId)
+                .then((res) => {
+                  // Payment landed as the popup closed — keep pending until the webhook promotes it.
+                  if (res.status === "in_flight") {
+                    setAwaitingSwitch({ targetSlug: plan.slug, targetName: plan.name, startedAt: Date.now() });
+                  }
+                })
+                .catch(() => {
+                  // Failed cancel keeps the pending state; it still expires on its own.
+                })
+                .finally(() => refetch());
             },
           },
         });
@@ -233,7 +245,7 @@ export function BuyCreditsModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] overflow-auto overscroll-contain bg-bg">
+    <div className="animate-modal-in fixed inset-0 z-[60] overflow-auto overscroll-contain bg-bg">
 
       {/* ---- Phones: tab bar, balance, tile grid, pinned buy button ---- */}
       <div className="flex h-full flex-col md:hidden">
@@ -444,7 +456,10 @@ export function BuyCreditsModal() {
                   ) : mLocked ? (
                     periodEnd ? `Available after ${periodEnd}` : "Available after this period"
                   ) : buyingId === mSel.id ? (
-                    "Opening checkout…"
+                    <>
+                      <Loader2 size={15} className="animate-spin" /> Opening checkout…
+                    </>
+
                   ) : tab === "credits" ? (
                     `Purchase now · ₹${formatRupees(mSel.price)}`
                   ) : mUpgrade ? (
@@ -489,7 +504,7 @@ export function BuyCreditsModal() {
               setTab("sub");
               setConfirmId(null);
             }}
-            className={`rounded-full px-5 py-2 text-[13.5px] font-semibold ${
+            className={`rounded-full px-5 py-2 text-[13.5px] font-semibold transition-colors duration-200 ${
               tab === "sub" ? "bg-accent text-accent-ink" : "text-muted"
             }`}
           >
@@ -500,7 +515,7 @@ export function BuyCreditsModal() {
               setTab("credits");
               setConfirmId(null);
             }}
-            className={`rounded-full px-5 py-2 text-[13.5px] font-semibold ${
+            className={`rounded-full px-5 py-2 text-[13.5px] font-semibold transition-colors duration-200 ${
               tab === "credits" ? "bg-accent text-accent-ink" : "text-muted"
             }`}
           >
@@ -536,7 +551,9 @@ export function BuyCreditsModal() {
                   <div
                     key={plan.id}
                     aria-disabled={!isOwner}
-                    className={`relative flex w-full flex-none flex-col gap-3 rounded-2xl border p-4 md:w-[250px] md:p-5 ${
+                    className={`relative flex w-full flex-none flex-col gap-3 rounded-2xl border p-4 transition-[transform,border-color] duration-150 md:w-[250px] md:p-5 ${
+                      isOwner && !current ? "motion-safe:md:hover:-translate-y-0.5 md:hover:border-border-strong" : ""
+                    } ${
                       current
                         ? "border-border-strong bg-surface-2"
                         : featured
@@ -605,6 +622,11 @@ export function BuyCreditsModal() {
                                 : "border border-border-strong hover:border-accent disabled:opacity-50"
                         } ${lockedUntilRenewal ? "text-[12.5px]" : ""}`}
                       >
+                        {/* Keyed by state so the label fades in when it changes (e.g. Waiting → Upgrade). */}
+                        <span
+                          key={current ? "current" : awaitingPayment ? "waiting" : isBuying ? "buying" : "idle"}
+                          className="animate-label-in inline-flex items-center gap-1.5"
+                        >
                         {current ? (
                           <>
                             <Check size={14} /> Current plan
@@ -618,12 +640,16 @@ export function BuyCreditsModal() {
                         ) : lockedUntilRenewal ? (
                           periodEnd ? `Available after ${periodEnd}` : "Available after this period"
                         ) : isBuying ? (
-                          "Opening checkout…"
+                          <>
+                            <Loader2 size={14} className="animate-spin" /> Opening checkout…
+                          </>
+
                         ) : upgrade ? (
                           "Upgrade"
                         ) : (
                           "Get started"
                         )}
+                        </span>
                       </button>
                     )}
 

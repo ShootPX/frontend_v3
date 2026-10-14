@@ -153,7 +153,7 @@ export function RecentWork() {
                   e.preventDefault();
                   open();
                 }}
-                className={`group relative aspect-square w-[34vw] max-w-[170px] flex-none snap-start overflow-hidden border md:w-auto md:max-w-none border-border bg-surface outline-none transition-colors focus-visible:border-accent ${
+                className={`group relative aspect-square w-[34vw] max-w-[170px] flex-none snap-start transform-gpu overflow-hidden rounded-xl border md:w-auto md:max-w-none border-border bg-surface outline-none transition-colors focus-visible:border-accent ${
                   ready ? "cursor-pointer hover:border-border-strong" : ""
                 }`}
               >

@@ -1,5 +1,5 @@
 import { authedJson } from "@/lib/api/authed-fetch";
-import type { CancelSubscriptionResponse, CreditPackCheckout, SubscriptionCheckout } from "@/lib/types/checkout";
+import type { CancelPendingSwitchResponse, CancelSubscriptionResponse, CreditPackCheckout, SubscriptionCheckout } from "@/lib/types/checkout";
 
 export function checkoutCreditPack(teamId: string, packId: string) {
   return authedJson<CreditPackCheckout>(
@@ -18,6 +18,13 @@ export function checkoutSubscription(teamId: string, subscriptionId: string) {
 export function switchSubscription(teamId: string, newSubscriptionId: string) {
   return authedJson<SubscriptionCheckout>(
     `/billing/teams/${teamId}/subscriptions/${newSubscriptionId}/switch`,
+    { method: "POST" },
+  );
+}
+
+export function cancelPendingSwitch(teamId: string) {
+  return authedJson<CancelPendingSwitchResponse>(
+    `/billing/teams/${teamId}/subscriptions/switch/cancel`,
     { method: "POST" },
   );
 }
