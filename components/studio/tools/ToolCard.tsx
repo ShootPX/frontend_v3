@@ -3,7 +3,7 @@ import type { Tool } from "@/lib/types/tool";
 import { ToolThumb } from "./ToolThumb";
 
 const TILE =
-  "group relative block aspect-square overflow-hidden border border-border bg-surface outline-none focus-visible:ring-2 focus-visible:ring-accent";
+  "group relative block aspect-square overflow-hidden rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent";
 
 export function ToolCard({ tool }: { tool: Tool }) {
   const soon = tool.status !== "live";
