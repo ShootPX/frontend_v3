@@ -13,6 +13,12 @@ export type SubscriptionCheckout = {
   key_id: string;
 };
 
+export type CancelPendingSwitchResponse = {
+  // "in_flight" = payment already taken/in progress; the webhook will promote it.
+  status: "cancelled" | "cleared" | "none" | "in_flight";
+  teamId: string;
+};
+
 export type CancelSubscriptionResponse = {
   status: string;
   teamId: string;
